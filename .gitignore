@@ -1,0 +1,3 @@
+# ignore config file to avoid constant overwrites
+
+neriX_config.py
