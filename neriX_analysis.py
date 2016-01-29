@@ -1,12 +1,14 @@
 import ROOT as root
 from ROOT import gROOT
-import sys
+import sys, os
 from rootpy import stl
 from rootpy.io import File
 from rootpy.tree import Tree, TreeModel, TreeChain
 import neriX_config, neriX_datasets, neriX_pmt_gain_corrections
 import threading
 import numpy as np
+from rootpy.io.pickler import dump, load
+
 
 # MUST INCLUDE TYPES TO AVOID SEG FAULT
 stl.vector(stl.vector('float'))
@@ -29,6 +31,60 @@ def pull_all_files_given_parameters(run, anodeSetting, cathodeSetting, degreeSet
 				lFilesToLoad.append(file)
 
 	return lFilesToLoad
+
+
+
+def save_plot(lDirectories, canvas, filename, lFileTypes=['png', 'C']):
+	# arguments should be in the following form:
+	# path_to_image = ./lDirectories[0]/lDirectories[1]/<filename>.<fileType>
+	
+	print '\n'
+	response = raw_input('Would you like to save the canvas to a file?  If so, please enter "y" otherwise press enter: ')
+	print '\n'
+	
+	if response != 'y':
+		return
+	
+	sPath = './'
+	for directory in lDirectories:
+		sPath += '%s/' % directory
+		
+	# check if path exists and make it if not
+	if not os.path.exists(sPath):
+		os.makedirs(sPath)
+
+	for type in lFileTypes:
+		canvas.Print('%s%s.%s' % (sPath, filename, type))
+
+
+
+def write_root_object(lDirectories, object, filename):
+	# arguments should be in the following form:
+	# path_to_image = ./lDirectories[0]/lDirectories[1]/<filename>.p
+	
+	print '\n'
+	response = raw_input('Would you like to save the canvas to a file?  If so, please enter "y" otherwise press enter: ')
+	print '\n'
+	
+	if response != 'y':
+		return
+	
+	sPath = './'
+	for directory in lDirectories:
+		sPath += '%s/' % directory
+		
+	# check if path exists and make it if not
+	if not os.path.exists(sPath):
+		os.makedirs(sPath)
+
+	try:
+		#dump(object, '%s%s.root' % (sPath, filename))
+		fObject = File('%s%s.root' % (sPath, filename), 'recreate')
+		object.Write()
+		fObject.Close()
+	except:
+		print 'ERROR: Pickling object of type %s failed.' % str(type(object))
+
 
 
 
@@ -279,8 +335,8 @@ class neriX_analysis:
 		
 		self.Xrun = '(EventId != -1)' #add a cut so that add statements work
 		
-		self.dTOFBounds = {(45, 1.054):(25, 50),
-						   (30, 1.054):(45, 80),
+		self.dTOFBounds = {(45, 1.054):(5, 40),#(25, 50),
+						   (30, 1.054):(10, 50),#(45, 80),
 						   (45, 2.356):(5, 40),
 						   (30, 2.356):(10, 50),
 						   (45, 0.345):(5, 40), 
@@ -302,6 +358,11 @@ class neriX_analysis:
 	
 	def get_filename(self, index=0):
 		return self.lFilenames[index]
+	
+	
+	
+	def get_filename_no_ext(self, index=0):
+		return self.lFilenames[index][:-5]
 	
 	
 	
@@ -541,7 +602,10 @@ class neriX_analysis:
 
 	def get_livetime(self):
 		# use -1 to grab last file in list
-		return self.get_timestamp(self.lT1[-1].GetEntries() - 1, -1) - self.get_timestamp(0)
+		totalTime = 0.
+		for i in xrange(len(self.lT1)):
+			totalTime += (self.get_timestamp(self.lT1[i].GetEntries() - 1, i) - self.get_timestamp(0, i))
+		return totalTime
 
 
 
