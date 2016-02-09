@@ -1,6 +1,9 @@
 pathToData = '/Users/Matt/Desktop/Xenon/neriX/data/'
 pathToModules = '/Users/Matt/Desktop/Xenon/python_modules/'
 
+# paths on Archive for copy script
+lPathsToDataArchive = ['/home/xedaq/merged/run_15/', '/home/xedaq/merged/s2_gain/run_15/', '/data/nerix/merged/run_15/', '/data/nerix/merged/s2_gain/run_15/']
+
 #dG2[run][cathodeSetting]
 dG2 = {10:{0.345:16.41, 1.054:17.23, 2.356:15.99, 5.5:16.66},
 	   11:{0.345:15.95, 1.054:16.20, 2.356:15.43, 5.5:15.56}}

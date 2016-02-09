@@ -1,6 +1,6 @@
 import ROOT as root
 from ROOT import gROOT
-import sys, os
+import sys, os, click
 from rootpy import stl
 from rootpy.io import File
 from rootpy.tree import Tree, TreeModel, TreeChain
@@ -13,6 +13,25 @@ from rootpy.io.pickler import dump, load
 # MUST INCLUDE TYPES TO AVOID SEG FAULT
 stl.vector(stl.vector('float'))
 stl.vector(stl.vector('int'))
+
+def success_message(message):
+	click.echo(click.style('\n\nSUCCESS: %s\n\n' % message, fg='green', bold=True))
+
+
+
+def warning_message(message):
+	click.echo(click.style('\n\nWARNING: %s\n\n' % message, fg='yellow', bold=True, blink=True))
+
+
+def failure_message(message):
+	click.echo(click.style('\n\nFAILURE: %s\n\n' % message, fg='red', bold=True))
+
+
+
+def debug_message(message):
+	click.echo(click.style('\n\nDEBUG: %s\n\n' % message, fg='orange', bold=True))
+
+
 
 def pull_all_files_given_parameters(run, anodeSetting, cathodeSetting, degreeSetting):
 	lFilesToLoad = []
@@ -63,7 +82,7 @@ def write_root_object(lDirectories, object, filename):
 	# path_to_image = ./lDirectories[0]/lDirectories[1]/<filename>.p
 	
 	print '\n'
-	response = raw_input('Would you like to save the canvas to a file?  If so, please enter "y" otherwise press enter: ')
+	response = raw_input('Would you like to save %s to a file?  If so, please enter "y" otherwise press enter: ' % str(object))
 	print '\n'
 	
 	if response != 'y':
@@ -340,7 +359,13 @@ class neriX_analysis:
 						   (45, 2.356):(5, 40),
 						   (30, 2.356):(10, 50),
 						   (45, 0.345):(5, 40), 
-						   (30, 0.345):(10, 50)
+						   (30, 0.345):(10, 50),
+						   (62, 1.054):(-5, 15),
+						   (35, 1.054):(0, 20),
+						   (62, 2.356):(-5, 15),
+						   (35, 2.356):(0, 20),
+						   (62, 0.345):(-5, 15),
+						   (35, 0.345):(0, 20)
 						  }
 		
 		
