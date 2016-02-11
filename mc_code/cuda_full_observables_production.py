@@ -164,7 +164,7 @@ __global__ void gpu_full_observables_production(int *seed, int *num_trials, floa
 			return;
 		}
 		
-		mcS1 = (curand_normal(&s) * *speRes*mcS1) + mcS1;
+		mcS1 = (curand_normal(&s) * *speRes*powf(mcS1, 0.5)) + mcS1;
 		if (mcS1 < 0) 
 		{	
 			aS1[iteration] = -1;
@@ -179,13 +179,7 @@ __global__ void gpu_full_observables_production(int *seed, int *num_trials, floa
 			return;
 		}
 		
-		mcS2 = (curand_normal(&s) * *speRes*mcS2) + mcS2;
-		if (mcS2 < 0) 
-		{	
-			aS1[iteration] = -1;
-			aS2[iteration] = -1;
-			return;
-		}
+		
 		mcS2 = (curand_normal(&s) * *intrinsicResS2*mcS2) + mcS2;
 		if (mcS2 < 0) 
 		{	
