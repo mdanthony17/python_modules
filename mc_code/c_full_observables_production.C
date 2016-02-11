@@ -98,8 +98,9 @@ void full_matching_loop(int *seed, int *numTrials, float *aS1, float *aS2, float
 		mcS1 = r3.Gaus(mcS1, *intrinsicResS1*mcS1);
 		if (mcS1 < 0) continue;
 		
-		mcS2 = r3.Gaus(mcS2, *speRes*pow(mcS2, 0.5));
-		if (mcS2 < 0) continue;
+		// no SPE smearing (included in gas gain)
+		//mcS2 = r3.Gaus(mcS2, *speRes*pow(mcS2, 0.5));
+		//if (mcS2 < 0) continue;
 		mcS2 = r3.Gaus(mcS2, *intrinsicResS2*mcS2);
 		if (mcS2 < 0) continue;
 		
