@@ -805,6 +805,46 @@ for run in run_files:
 		run_files[run]['nerix_160128_1513.root'] = (4.50, 1.054, -1)
 		run_files[run]['nerix_160203_0931.root'] = (4.50, 1.054, -1)
 		
+		# need to analyze below
+		
+		run_files[run]['nerix_160201_2000.root'] = (4.50, 0.345, -6)
+		run_files[run]['nerix_160201_2312.root'] = (4.50, 0.700, -6)
+		run_files[run]['nerix_160202_0626.root'] = (4.50, 1.054, -6)
+		run_files[run]['nerix_160202_0914.root'] = (4.50, 1.500, -6)
+		run_files[run]['nerix_160202_1037.root'] = (4.50, 2.356, -6)
+
+		run_files[run]['nerix_160204_0922.root'] = (4.50, 1.054, -4)
+		
+		run_files[run]['nerix_160204_1026.root'] = (4.50, 0.345, -1)
+		run_files[run]['nerix_160204_1053.root'] = (4.50, 0.700, -1)
+		run_files[run]['nerix_160204_1119.root'] = (4.50, 1.054, -1)
+		run_files[run]['nerix_160204_1145.root'] = (4.50, 1.500, -1)
+		run_files[run]['nerix_160204_1212.root'] = (4.50, 2.356, -1)
+		
+		run_files[run]['nerix_160204_1242.root'] = (4.50, 0.345, -5)
+		run_files[run]['nerix_160204_1310.root'] = (4.50, 0.700, -5)
+		run_files[run]['nerix_160204_1337.root'] = (4.50, 1.054, -5)
+		run_files[run]['nerix_160204_1404.root'] = (4.50, 1.500, -5)
+		run_files[run]['nerix_160204_1438.root'] = (4.50, 2.356, -5)
+		
+		run_files[run]['nerix_160208_0941.root'] = (4.50, 0.345, -1)
+		run_files[run]['nerix_160208_1010.root'] = (4.50, 0.700, -1)
+		run_files[run]['nerix_160208_1039.root'] = (4.50, 1.054, -1)
+		run_files[run]['nerix_160208_1109.root'] = (4.50, 1.500, -1)
+		run_files[run]['nerix_160208_1137.root'] = (4.50, 2.356, -1)
+		
+		run_files[run]['nerix_160208_1334.root'] = (4.50, 0.345, -5)
+		run_files[run]['nerix_160208_1402.root'] = (4.50, 0.700, -5)
+		run_files[run]['nerix_160208_1428.root'] = (4.50, 1.054, -5)
+		run_files[run]['nerix_160208_1454.root'] = (4.50, 1.500, -5)
+		run_files[run]['nerix_160208_1521.root'] = (4.50, 2.356, -5)
+		
+		run_files[run]['nerix_160208_1709.root'] = (4.50, 0.345, -6)
+		run_files[run]['nerix_160208_1817.root'] = (4.50, 0.700, -6)
+		run_files[run]['nerix_160208_1928.root'] = (4.50, 1.054, -6)
+		run_files[run]['nerix_160208_2038.root'] = (4.50, 1.500, -6)
+		run_files[run]['nerix_160208_2205.root'] = (4.50, 2.356, -6)
+		
 		
 		
 		# coincidence

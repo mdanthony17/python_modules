@@ -93,14 +93,18 @@ void full_matching_loop(int *seed, int *numTrials, float *aS1, float *aS2, float
 		
 		if (*speRes <= 0 || *intrinsicResS1 <= 0 || *intrinsicResS2 <= 0) continue;
 		
-		mcS1 = r3.Gaus(mcS1, *speRes*pow(mcS1, 0.5));
+		//mcS1 = r3.Gaus(mcS1, *speRes*pow(mcS1, 0.5));
+		mcS1 = r3.Gaus(mcS1, *speRes*mcS1);
 		if (mcS1 < 0) continue;
-		mcS1 = r3.Gaus(mcS1, *intrinsicResS1*pow(mcS1, 0.5));
+		//mcS1 = r3.Gaus(mcS1, *intrinsicResS1*pow(mcS1, 0.5));
+		mcS1 = r3.Gaus(mcS1, *intrinsicResS1*mcS1);
 		if (mcS1 < 0) continue;
 		
-		mcS2 = r3.Gaus(mcS2, *speRes*pow(mcS2, 0.5));
+		//mcS2 = r3.Gaus(mcS2, *speRes*pow(mcS2, 0.5));
+		mcS2 = r3.Gaus(mcS2, *speRes*mcS2);
 		if (mcS2 < 0) continue;
-		mcS2 = r3.Gaus(mcS2, *intrinsicResS2*pow(mcS2, 0.5));
+		//mcS2 = r3.Gaus(mcS2, *intrinsicResS2*pow(mcS2, 0.5));
+		mcS2 = r3.Gaus(mcS2, *intrinsicResS2*mcS2);
 		if (mcS2 < 0) continue;
 		
 		aS1[i] = mcS1;
