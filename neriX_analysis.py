@@ -1,6 +1,6 @@
 import ROOT as root
 from ROOT import gROOT
-import sys, os, click
+import sys, os, click, time
 from rootpy import stl
 from rootpy.io import File
 from rootpy.tree import Tree, TreeModel, TreeChain
@@ -104,6 +104,36 @@ def write_root_object(lDirectories, object, filename):
 	except:
 		print 'ERROR: Pickling object of type %s failed.' % str(type(object))
 
+
+
+def check_for_file_info(nameOfFile):
+	if not nameOfFile[-5:] == '.root':
+		nameOfFile += '.root'
+
+	for run in neriX_datasets.runsInUse:
+		try:
+			tParameters = neriX_datasets.run_files[run][nameOfFile]
+			return tParameters
+		except:
+			pass
+
+
+
+def convert_name_to_unix_time(fileName):
+	if fileName[-5:] == '.root':
+		fileName = fileName[:-5]
+	
+	# check that we know position of dates in name
+	if fileName[0:5] == 'nerix':
+		sTimeTaken = '20' + fileName[6:17] + '00'
+		return int(time.mktime(time.strptime(sTimeTaken, '%Y%m%d_%H%M%S')))
+	elif fileName[0:8] == 'ct_nerix':
+		sTimeTaken = '20' + fileName[9:20] + '00'
+		return int(time.mktime(time.strptime(sTimeTaken, '%Y%m%d_%H%M%S')))
+	else:
+		print 'Only know how to handle nerix and ct_nerix files currently'
+		print 'Please add to convert_name_to_unix_time function in order to handle the new case'
+		sys.exit()
 
 
 
@@ -354,19 +384,7 @@ class neriX_analysis:
 		
 		self.Xrun = '(EventId != -1)' #add a cut so that add statements work
 		
-		self.dTOFBounds = {(45, 1.054):(5, 40),#(25, 50),
-						   (30, 1.054):(10, 50),#(45, 80),
-						   (45, 2.356):(5, 40),
-						   (30, 2.356):(10, 50),
-						   (45, 0.345):(5, 40), 
-						   (30, 0.345):(10, 50),
-						   (62, 1.054):(-5, 15),
-						   (35, 1.054):(0, 20),
-						   (62, 2.356):(-5, 15),
-						   (35, 2.356):(0, 20),
-						   (62, 0.345):(-5, 15),
-						   (35, 0.345):(0, 20)
-						  }
+		self.dTOFBounds = neriX_datasets.dTOFBounds
 		
 		
 		

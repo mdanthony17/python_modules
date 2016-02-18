@@ -77,6 +77,13 @@ void full_matching_loop(int *seed, int *numTrials, float *aS1, float *aS2, float
 		if (*gasGainWidth <= 0) continue;
 		
 		mcS1 = r3.Binomial(mcPhotons, *g1Value);
+		
+		//printf("DPE taken into account but hardcoded!");
+		//mcS1 = r3.Binomial(mcPhotons, *g1Value / 1.21);
+		//float dpe = r3.Binomial(mcS1, 0.21);
+		//mcS1 = mcS1 + dpe;
+		
+		
 		mcExtractedElectrons = r3.Binomial(mcElectrons, *extractionEfficiency);
 		mcS2 = r3.Gaus(mcExtractedElectrons * *gasGainValue, *gasGainWidth*pow(mcExtractedElectrons, 0.5));
 		
