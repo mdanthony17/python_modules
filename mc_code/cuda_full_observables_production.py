@@ -22,7 +22,7 @@ __global__ void gpu_full_observables_production(int *seed, int *num_trials, floa
 	const int iteration = blockIdx.x * blockDim.x * blockDim.y + threadIdx.y * blockDim.x + threadIdx.x;
 
 	curand_init(0, 0, 0, &s); // for debugging
-	//curand_init(*seed, 0, 0, &s);
+	//curand_init(*seed * iteration, 0, 0, &s);
 	
 	float probRecombination = (( (*excitonToIonRatio+1) * *photonYield )/(*photonYield+*chargeYield) - *excitonToIonRatio);
 

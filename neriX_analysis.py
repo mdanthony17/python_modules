@@ -53,16 +53,18 @@ def pull_all_files_given_parameters(run, anodeSetting, cathodeSetting, degreeSet
 
 
 
-def save_plot(lDirectories, canvas, filename, lFileTypes=['png', 'C']):
+def save_plot(lDirectories, canvas, filename, lFileTypes=['png', 'C'], batch_mode=False):
 	# arguments should be in the following form:
 	# path_to_image = ./lDirectories[0]/lDirectories[1]/<filename>.<fileType>
 	
-	print '\n'
-	response = raw_input('Would you like to save the canvas to a file?  If so, please enter "y" otherwise press enter: ')
-	print '\n'
+	if not batch_mode:
+		print '\n'
+		response = raw_input('Would you like to save the canvas to a file?  If so, please enter "y" otherwise press enter: ')
+		print '\n'
+		
+		if response != 'y':
+			return
 	
-	if response != 'y':
-		return
 	
 	sPath = './'
 	for directory in lDirectories:
@@ -134,6 +136,22 @@ def convert_name_to_unix_time(fileName):
 		print 'Only know how to handle nerix and ct_nerix files currently'
 		print 'Please add to convert_name_to_unix_time function in order to handle the new case'
 		sys.exit()
+
+
+
+def create_canvas_for_multiple_histograms(lHists):
+	# lHist is a list of dictionaries that will be
+	# called dHists
+
+	# dHists should include the key 'hist' with a Hist
+	# or Hist2D
+	# if Hist is given, one should also include keyword
+	# 'color' since they will be drawn on top of each other
+
+	# optional keys
+	#
+
+	numberOfHistograms = len(lHists)
 
 
 
@@ -385,6 +403,7 @@ class neriX_analysis:
 		self.Xrun = '(EventId != -1)' #add a cut so that add statements work
 		
 		self.dTOFBounds = neriX_datasets.dTOFBounds
+		self.lLiqSciS1DtRange = neriX_datasets.lLiqSciS1DtRange
 		
 		
 		
@@ -511,6 +530,44 @@ class neriX_analysis:
 		self.Xrun = self.Xrun + ' && ' + Xneutron
 		
 		
+		
+	def add_temp_gamma_cut(self, angle, lEJChannels = []):
+		# add temporary neutron cuts for each EJ
+		Xgamma = '( (EventId == -1) ' # always false so does nothing
+		
+		assert isinstance(angle, int), 'Angle input should be of type int - round to nearest degree.'
+		assert isinstance(self.degreeSetting, dict), 'Must be using NR coincidence data - "degreeSetting" should be a dictionary.'
+		
+		lChannelsToCutOn = []
+		lChannelsAtAngle = self.degreeSetting[angle]
+		if len(lEJChannels) > 0:
+			for channel in lEJChannels:
+				if not channel in lChannelsAtAngle:
+					print 'Chosen EJ channel not at given angle - please fix!'
+					sys.exit()
+				else:
+					lChannelsToCutOn.append(channel)
+		else:
+			lChannelsToCutOn = lChannelsAtAngle
+		
+		# now that channels are final, make cuts on EJs
+		for channel in lChannelsToCutOn:
+			if channel == 0:
+				Xgamma += ' || ((psd0 < 0.22) && (LiqSciHeight[0] > 0.2 && LiqSciHeight[0] < 1.0))'
+			elif channel == 1:
+				Xgamma += ' || ((psd1 < 0.15) && (LiqSciHeight[1] > 0.35 && LiqSciHeight[1] < 1.0))'
+			elif channel == 2:
+				Xgamma += ' || ((psd2 < 0.2) && (LiqSciHeight[2] > 0.4 && LiqSciHeight[2] < 1.4))'
+			elif channel == 3:
+				Xgamma += ' || ((psd3 < 0.2) && (LiqSciHeight[3] > 0.4 && LiqSciHeight[3] < 1.4))'
+			else:
+				print 'neriX_analysis not able to handle EJ channel ' + str(channel) + '.  Please check input and try again.'
+				sys.exit()
+		
+		Xgamma += ' )' # end if clause
+		self.Xrun = self.Xrun + ' && ' + Xgamma
+		
+		
 	
 	def add_temp_tof_cut(self, angle):
 		"""
@@ -542,7 +599,7 @@ class neriX_analysis:
 	def add_s1_liqsci_peak_cut(self, lEJChannels=[0, 1, 2, 3]):
 		Xpeak = '( '
 		for channel in lEJChannels:
-			Xpeak += '( (LiqSciPeak[%d] - S1sPeak[0]) < 20 && (LiqSciPeak[%d] - S1sPeak[0]) > 2 ) || ' % (channel, channel)
+			Xpeak += '( (LiqSciPeak[%d] - S1sPeak[0]) < %d && (LiqSciPeak[%d] - S1sPeak[0]) > %d ) || ' % (channel, self.lLiqSciS1DtRange[1], channel, self.lLiqSciS1DtRange[0])
 		Xpeak = Xpeak[:-4] + ' )'
 		self.Xrun = self.Xrun + ' && ' + Xpeak
 	

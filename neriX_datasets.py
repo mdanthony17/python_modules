@@ -23,6 +23,9 @@ dTOFBounds = {(45, 1.054):(5, 40),#(25, 50),
 
 lTOFAccidentalsRanges = [[-50, -35], [80, 100]]
 
+lLiqSciS1DtRange = [2, 17]
+lLiqSciS1DtAccidentalsRanges = [[-80, -40], [40, 60]]
+
 # set runs to use here
 runsInUse = [10, 11, 13, 14, 15]
 
@@ -883,7 +886,30 @@ for run in run_files:
 		run_files[run]['nerix_160216_2255.root'] = (4.50, 1.500, -6)
 		run_files[run]['nerix_160217_0643.root'] = (4.50, 2.356, -6)
 		
+		run_files[run]['nerix_160219_1248.root'] = (4.50, 2.356, -1)
+		run_files[run]['nerix_160219_1433.root'] = (4.50, 2.356, -4)
 		
+		run_files[run]['nerix_160222_1048.root'] = (4.50, 2.356, -1)
+		
+		run_files[run]['nerix_160222_1157.root'] = (4.50, 0.345, -1)
+		run_files[run]['nerix_160222_1224.root'] = (4.50, 0.700, -1)
+		run_files[run]['nerix_160222_1254.root'] = (4.50, 1.054, -1)
+		run_files[run]['nerix_160222_1325.root'] = (4.50, 1.500, -1)
+		run_files[run]['nerix_160222_1353.root'] = (4.50, 2.356, -1)
+		
+		run_files[run]['nerix_160222_1449.root'] = (4.50, 0.345, -5)
+		run_files[run]['nerix_160222_1518.root'] = (4.50, 0.700, -5)
+		run_files[run]['nerix_160222_1545.root'] = (4.50, 1.054, -5)
+		run_files[run]['nerix_160222_1613.root'] = (4.50, 1.500, -5)
+		run_files[run]['nerix_160222_1640.root'] = (4.50, 2.356, -5)
+		
+		run_files[run]['nerix_160222_1709.root'] = (4.50, 0.345, -6)
+		run_files[run]['nerix_160222_1851.root'] = (4.50, 0.700, -6)
+		run_files[run]['nerix_160222_2200.root'] = (4.50, 1.054, -6)
+		run_files[run]['nerix_160222_2310.root'] = (4.50, 1.500, -6)
+		run_files[run]['nerix_160223_0627.root'] = (4.50, 2.356, -6)
+		
+		run_files[run]['nerix_160223_0947.root'] = (4.50, 2.356, -4)
 		
 		
 		
@@ -1037,9 +1063,19 @@ for run in run_files:
 		run_files[run]['nerix_160215_0942.root'] = (4.50, 0.345, {62:[2,3], 35:[0,1]})
 		run_files[run]['nerix_160217_0944.root'] = (4.50, 0.345, {62:[2,3], 35:[0,1]})
 		run_files[run]['nerix_160218_0921.root'] = (4.50, 0.345, {62:[2,3], 35:[0,1]})
-
+		
 		run_files[run]['nerix_160218_1158.root'] = (4.50, 2.356, {62:[2,3], 35:[0,1]})
-		run_files[run]['nerix_160218_1.root'] = (4.50, 2.356, {62:[2,3], 35:[0,1]})
+		run_files[run]['nerix_160218_1525.root'] = (4.50, 2.356, {62:[2,3], 35:[0,1]})
+		run_files[run]['nerix_160219_1529.root'] = (4.50, 2.356, {62:[2,3], 35:[0,1]})
+		run_files[run]['nerix_160219_1715.root'] = (4.50, 2.356, {62:[2,3], 35:[0,1]})
+		run_files[run]['nerix_160221_1049.root'] = (4.50, 2.356, {62:[2,3], 35:[0,1]})
+		
+		run_files[run]['nerix_160224_1542.root'] = (4.50, 2.356, {62:[2,3], 35:[0,1]})
+		run_files[run]['nerix_160226_1014.root'] = (4.50, 2.356, {62:[2,3], 35:[0,1]})
+		run_files[run]['nerix_160226_1014.root'] = (4.50, 2.356, {62:[2,3], 35:[0,1]})
+		
+		
+		
 		
 		# ***************
 		
@@ -1048,7 +1084,14 @@ for run in run_files:
 		
 		
 		
-		
+		# TRIAL with EJ in place of TAC in trigger
+		"""
+		run_files[run]['nerix_160223_1039.root'] = (4.50, 2.356, {62:[2,3], 35:[0,1]})
+		run_files[run]['nerix_160223_1043.root'] = (4.50, 2.356, {62:[2,3], 35:[0,1]})
+		run_files[run]['nerix_160223_1246.root'] = (4.50, 2.356, {62:[2,3], 35:[0,1]})
+		run_files[run]['nerix_160223_1430.root'] = (4.50, 2.356, {62:[2,3], 35:[0,1]})
+		run_files[run]['nerix_160224_1039.root'] = (4.50, 2.356, {62:[2,3], 35:[0,1]})
+		"""
 		
 		# separate for comparisons (high rate)
 		"""
