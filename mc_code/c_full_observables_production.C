@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <math.h>
 
-void full_matching_loop(int *seed, int *numTrials, float *aS1, float *aS2, float *aEnergy, float *photonYield, float *chargeYield, float *excitonToIonRatio, float *g1Value, float *extractionEfficiency, float *gasGainValue, float *gasGainWidth, float *speRes, float *intrinsicResS1, float *intrinsicResS2)
+void full_matching_loop(int *seed, int *numTrials, float *aS1, float *aS2, float *aEnergy, float *photonYield, float *chargeYield, float *excitonToIonRatio, float *g1Value, float *extractionEfficiency, float *gasGainValue, float *gasGainWidth, float *speRes, float *intrinsicResS1, float *intrinsicResS2, float *tacEff, float *trigEff, float *pfEff)
 {
 	TRandom r3 = TRandom3(*seed);
 	
@@ -110,6 +110,22 @@ void full_matching_loop(int *seed, int *numTrials, float *aS1, float *aS2, float
 		//if (mcS2 < 0) continue;
 		mcS2 = r3.Gaus(mcS2, *intrinsicResS2*mcS2);
 		if (mcS2 < 0) continue;
+		
+		// tof_efficiency
+		//printf("S1: %f \n", mcS1);
+		//printf("eff: %f \n", (1. - exp(-tacEff[0] * mcS1)));
+		//printf("rndm: %f \n", r3.Rndm());
+		if (r3.Rndm() > (1. - exp(-tacEff[0] * mcS1))) continue;
+		
+		// trig efficiency
+		//printf("S2: %f \n", mcS2);
+		//printf("eff: %f \n", 1. / (1 + exp(-trigEff[0]*(mcS2-trigEff[1]))));
+		if (r3.Rndm() > 1. / (1 + exp(-trigEff[0]*(mcS2-trigEff[1])))) continue;
+		
+		// peak finder efficiency
+		//printf("S1: %f \n", mcS1);
+		//printf("eff: %f \n", 1. / (1. + exp(-(mcS1-pfEff[0])/pfEff[1])));
+		if (r3.Rndm() > 1. / (1. + exp(-(mcS1-pfEff[0])/pfEff[1]))) continue;
 		
 		aS1[i] = mcS1;
 		aS2[i] = mcS2;

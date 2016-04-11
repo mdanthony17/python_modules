@@ -4,7 +4,7 @@ PARAMETERS_INDEX = 0
 # once inside voltage Index
 ANODE_INDEX = 0
 CATHODE_INDEX = 1
-DEGREE_INDEX = 2 #-6 for bkg, -5 for na, -4 minitron, -3 for TDC, -2 (for co cal), -1 (for cs cal), 0 deg, or 25 deg
+DEGREE_INDEX = 2 #-7 for EJ cal, -6 for bkg, -5 for na, -4 minitron, -3 for TDC, -2 (for co cal), -1 (for cs cal), 0 deg, or 25 deg
 
 
 dTOFBounds = {(45, 1.054):(5, 40),#(25, 50),
@@ -38,6 +38,7 @@ for run in run_files:
 		
 		#Cs calibration files
 		run_files[run]['nerix_140915_1043.root'] = (4.50, 2.356, -1)
+		run_files[run]['nerix_140915_1158.root'] = (4.50, 2.356, -1)
 		run_files[run]['nerix_140917_1010.root'] = (4.50, 2.356, -1)
 		run_files[run]['nerix_140924_1007.root'] = (4.50, 1.054, -1)
 		run_files[run]['nerix_140924_1158.root'] = (4.50, 5.500, -1)
@@ -68,8 +69,13 @@ for run in run_files:
 		run_files[run]['nerix_141024_1556.root'] = (4.50, 0.345, -1)
 		
 		run_files[run]['nerix_141027_1041.root'] = (4.50, 2.356, -1)
+		run_files[run]['nerix_141029_1110.root'] = (4.50, 5.500, -1)
 		run_files[run]['nerix_141103_1101.root'] = (4.50, 5.500, -1)
 		run_files[run]['nerix_141103_1119.root'] = (4.50, 5.500, -1)
+		run_files[run]['nerix_141103_1553.root'] = (4.50, 2.356, -1)
+		
+		run_files[run]['nerix_141103_1627.root'] = (4.50, 1.054, -1)
+		run_files[run]['nerix_141103_1655.root'] = (4.50, 0.345, -1)
 		
 		
 		#Co calibrations
@@ -135,6 +141,7 @@ for run in run_files:
 		run_files[run]['nerix_140927_0035.root'] = (4.50, 5.500, 0)
 
 		run_files[run]['nerix_140928_0727.root'] = (4.50, 5.500, 0)
+		run_files[run]['nerix_140928_2321.root'] = (4.50, 5.500, 0)
 		run_files[run]['nerix_140929_1458.root'] = (4.50, 0.345, 0)
 		run_files[run]['nerix_140929_1720.root'] = (4.50, 0.345, 0)
 		run_files[run]['nerix_140930_0717.root'] = (4.50, 0.345, 0)
@@ -214,7 +221,9 @@ for run in run_files:
 		#run_files[run]['nerix_141124_1208.root'] = (4.50, 1.054, -1)
 		run_files[run]['nerix_141201_1409.root'] = (4.50, 1.054, -1)
 		run_files[run]['nerix_141203_1116.root'] = (4.50, 1.054, -1)
+		run_files[run]['nerix_141203_1506.root'] = (4.50, 1.054, -1)
 		run_files[run]['nerix_141205_1125.root'] = (4.50, 1.054, -1)
+		run_files[run]['nerix_141208_1123.root'] = (4.50, 5.500, -1)
 		run_files[run]['nerix_141208_1308.root'] = (4.50, 5.500, -1)
 
 		run_files[run]['nerix_141210_0929.root'] = (4.50, 5.500, -1)
@@ -224,10 +233,12 @@ for run in run_files:
 		run_files[run]['nerix_141215_1625.root'] = (4.50, 5.500, -1)
 		run_files[run]['nerix_141216_0925.root'] = (4.50, 2.356, -1)
 		run_files[run]['nerix_141217_0928.root'] = (4.50, 2.356, -1)
+		run_files[run]['nerix_141217_1041.root'] = (4.50, 2.356, -1)
 
 		run_files[run]['nerix_141219_1118.root'] = (4.50, 2.356, -1)
 		run_files[run]['nerix_141219_1816.root'] = (4.50, 1.054, -1)
 		run_files[run]['nerix_141222_1100.root'] = (4.50, 1.054, -1)
+		run_files[run]['nerix_141222_1244.root'] = (4.50, 1.054, -1)
 		run_files[run]['nerix_150105_1525.root'] = (4.50, 0.345, -1)
 		run_files[run]['nerix_150106_1100.root'] = (4.50, 0.345, -1)
 
@@ -238,8 +249,17 @@ for run in run_files:
 		run_files[run]['nerix_150112_1213.root'] = (4.50, 1.054, -1)
 
 		run_files[run]['nerix_150114_1224.root'] = (4.50, 1.054, -1)
+		run_files[run]['nerix_150114_1407.root'] = (4.50, 1.054, -1)
+		run_files[run]['nerix_150128_1158.root'] = (4.50, 0.345, -1)
+		run_files[run]['nerix_150128_1327.root'] = (4.50, 1.054, -1)
+		run_files[run]['nerix_150128_1454.root'] = (4.50, 2.356, -1)
+		
+		run_files[run]['nerix_150128_1622.root'] = (4.50, 5.500, -1)
 		run_files[run]['nerix_150119_1142.root'] = (4.50, 1.054, -1)
+		run_files[run]['nerix_150204_1210.root'] = (4.50, 1.054, -1)
 		run_files[run]['nerix_150210_1114.root'] = (4.50, 1.054, -1)
+		run_files[run]['nerix_150210_1210.root'] = (4.50, 1.054, -1)
+		
 		run_files[run]['nerix_150213_1200.root'] = (4.50, 1.054, -1)
 		
 		
@@ -911,12 +931,158 @@ for run in run_files:
 		
 		run_files[run]['nerix_160223_0947.root'] = (4.50, 2.356, -4)
 		
+		run_files[run]['nerix_160229_1015.root'] = (4.50, 2.356, -4)
+		run_files[run]['nerix_160229_1116.root'] = (4.50, 2.356, -1)
+		
+		run_files[run]['nerix_160229_1223.root'] = (4.50, 0.345, -1)
+		run_files[run]['nerix_160229_1250.root'] = (4.50, 0.700, -1)
+		run_files[run]['nerix_160229_1316.root'] = (4.50, 1.054, -1)
+		run_files[run]['nerix_160229_1342.root'] = (4.50, 1.500, -1)
+		run_files[run]['nerix_160229_1408.root'] = (4.50, 2.356, -1)
+		
+		run_files[run]['nerix_160229_1435.root'] = (4.50, 0.345, -5)
+		run_files[run]['nerix_160229_1504.root'] = (4.50, 0.700, -5)
+		run_files[run]['nerix_160229_1534.root'] = (4.50, 1.054, -5)
+		run_files[run]['nerix_160229_1605.root'] = (4.50, 1.500, -5)
+		run_files[run]['nerix_160229_1631.root'] = (4.50, 2.356, -5)
+		
+		run_files[run]['nerix_160229_1659.root'] = (4.50, 0.345, -6)
+		run_files[run]['nerix_160229_1814.root'] = (4.50, 0.700, -6)
+		run_files[run]['nerix_160229_2237.root'] = (4.50, 1.054, -6)
+		run_files[run]['nerix_160301_0725.root'] = (4.50, 1.500, -6)
+		run_files[run]['nerix_160301_0914.root'] = (4.50, 2.356, -6)
+		
+		run_files[run]['nerix_160301_1130.root'] = (4.50, 2.356, -7)
+		
+
+		
+		
+		
+		# change of KNF pump and getter
+		
+		run_files[run]['nerix_160316_0947.root'] = (4.50, 1.054, -1) # flow~2 SLPM
+		run_files[run]['nerix_160316_1308.root'] = (4.50, 1.054, -1) # flow~2.8 SLPM
+		run_files[run]['nerix_160316_1401.root'] = (4.50, 1.054, -1) # gas gain 
+		
+		run_files[run]['nerix_160319_1022.root'] = (4.50, 0.345, -1)
+		run_files[run]['nerix_160319_1424.root'] = (4.50, 0.700, -1)
+		run_files[run]['nerix_160318_1446.root'] = (4.50, 1.054, -1)
+		run_files[run]['nerix_160319_1913.root'] = (4.50, 1.500, -1)
+		run_files[run]['nerix_160319_2335.root'] = (4.50, 2.356, -1)
+		
+		run_files[run]['nerix_160321_1033.root'] = (4.50, 1.054, -1) # gas gain
+		run_files[run]['nerix_160321_1231.root'] = (4.50, 1.054, -4)
+		run_files[run]['nerix_160321_1416.root'] = (4.50, 1.054, -4)
+		
+		run_files[run]['nerix_160321_1639.root'] = (4.50, 1.054, -6)
+		run_files[run]['nerix_160321_2224.root'] = (4.50, 2.356, -6)
+		
+		run_files[run]['nerix_160322_1124.root'] = (4.50, 1.054, -1) # feedthrough at .175"
+		run_files[run]['nerix_160322_1218.root'] = (4.50, 1.054, -1) # feedthrough at .190"
+		run_files[run]['nerix_160322_1249.root'] = (4.50, 1.054, -1) # gas gain
+		run_files[run]['nerix_160322_1435.root'] = (4.50, 1.054, -4)
+		run_files[run]['nerix_160323_1019.root'] = (4.50, 1.054, -1) # gas gain
+
+		run_files[run]['nerix_160324_0921.root'] = (4.50, 1.054, -1) # gas gain
+		
+		
+		# need to analyze below
+		
+		# very difficult to fit (minitron off long time)
+		"""
+		run_files[run]['nerix_160322_1712.root'] = (4.50, 0.345, -6)
+		run_files[run]['nerix_160322_2005.root'] = (4.50, 0.700, -6)
+		run_files[run]['nerix_160322_2117.root'] = (4.50, 1.054, -6)
+		run_files[run]['nerix_160323_0652.root'] = (4.50, 1.500, -6)
+		run_files[run]['nerix_160323_0843.root'] = (4.50, 2.356, -6)
+		"""
+		
+		run_files[run]['nerix_160323_1323.root'] = (4.50, 0.345, -1)
+		run_files[run]['nerix_160323_1358.root'] = (4.50, 0.700, -1)
+		run_files[run]['nerix_160323_1433.root'] = (4.50, 1.054, -1)
+		run_files[run]['nerix_160323_1508.root'] = (4.50, 1.500, -1)
+		run_files[run]['nerix_160323_1539.root'] = (4.50, 2.356, -1)
+		
+		run_files[run]['nerix_160328_0918.root'] = (4.50, 0.345, -1)
+		run_files[run]['nerix_160328_1022.root'] = (4.50, 0.700, -1)
+		run_files[run]['nerix_160328_1053.root'] = (4.50, 1.054, -1)
+		run_files[run]['nerix_160328_1125.root'] = (4.50, 1.500, -1)
+		run_files[run]['nerix_160328_1156.root'] = (4.50, 2.356, -1)
+		
+		run_files[run]['nerix_160328_1228.root'] = (4.50, 0.345, -5)
+		run_files[run]['nerix_160328_1302.root'] = (4.50, 0.700, -5)
+		run_files[run]['nerix_160328_1342.root'] = (4.50, 1.054, -5)
+		run_files[run]['nerix_160328_1413.root'] = (4.50, 1.500, -5)
+		run_files[run]['nerix_160328_1443.root'] = (4.50, 2.356, -5)
+		
+		# very difficult to fit (minitron off long time)
+		run_files[run]['nerix_160328_1629.root'] = (4.50, 0.345, -6)
+		run_files[run]['nerix_160328_1738.root'] = (4.50, 0.700, -6)
+		run_files[run]['nerix_160328_1921.root'] = (4.50, 1.054, -6)
+		run_files[run]['nerix_160329_0000.root'] = (4.50, 1.500, -6)
+		run_files[run]['nerix_160329_0709.root'] = (4.50, 2.356, -6)
+		
+		run_files[run]['nerix_160329_0947.root'] = (4.50, 1.054, -4)
+		
+		run_files[run]['nerix_160329_1631.root'] = (4.50, 1.054, -1) #f-t=.175
+		run_files[run]['nerix_160329_1712.root'] = (4.50, 1.054, -1) #f-t=.200
+		run_files[run]['nerix_160329_1751.root'] = (4.50, 1.054, -1) #f-t=.225
+		run_files[run]['nerix_160329_1825.root'] = (4.50, 1.054, -1) #f-t=.250
+		
+		run_files[run]['nerix_160329_2014.root'] = (4.50, 0.345, -1) #f-t=.250
+		run_files[run]['nerix_160329_2050.root'] = (4.50, 0.700, -1) #f-t=.250
+		run_files[run]['nerix_160329_2117.root'] = (4.50, 1.054, -1) #f-t=.250
+		run_files[run]['nerix_160329_2149.root'] = (4.50, 1.500, -1) #f-t=.250
+		run_files[run]['nerix_160329_2215.root'] = (4.50, 2.356, -1) #f-t=.250
+		
+		run_files[run]['nerix_160329_2245.root'] = (4.50, 1.054, -1) #gas gain,f-t=.250
+		
+		# uniformity, f-t:0.25"
+		run_files[run]['nerix_160330_0656.root'] = (4.50, 0.345, -1)
+		run_files[run]['nerix_160330_0918.root'] = (4.50, 0.345, -1)
+		run_files[run]['nerix_160330_1037.root'] = (4.50, 0.345, -1)
+		run_files[run]['nerix_160330_1159.root'] = (4.50, 0.345, -1)
+		
+		run_files[run]['nerix_160330_1446.root'] = (4.50, 1.054, -4)
+		
+		run_files[run]['nerix_160331_1031.root'] = (4.50, 0.345, -5)
+		run_files[run]['nerix_160331_1104.root'] = (4.50, 0.700, -5)
+		run_files[run]['nerix_160331_1131.root'] = (4.50, 1.054, -5)
+		run_files[run]['nerix_160331_1205.root'] = (4.50, 1.500, -5)
+		run_files[run]['nerix_160331_1232.root'] = (4.50, 2.356, -5)
+		
+		run_files[run]['nerix_160331_1549.root'] = (4.50, 1.054, -4)
+		run_files[run]['nerix_160404_1059.root'] = (4.50, 1.054, -1) #gas gain,f-t=.250
+		
+		run_files[run]['nerix_160404_1204.root'] = (4.50, 0.345, -1)
+		run_files[run]['nerix_160404_1232.root'] = (4.50, 0.700, -1)
+		run_files[run]['nerix_160404_1259.root'] = (4.50, 1.054, -1)
+		run_files[run]['nerix_160404_1325.root'] = (4.50, 1.500, -1)
+		run_files[run]['nerix_160404_1350.root'] = (4.50, 2.356, -1)
+		
+		run_files[run]['nerix_160404_1421.root'] = (4.50, 0.345, -5)
+		run_files[run]['nerix_160404_1447.root'] = (4.50, 0.700, -5)
+		run_files[run]['nerix_160404_1530.root'] = (4.50, 1.054, -5)
+		run_files[run]['nerix_160404_1555.root'] = (4.50, 1.500, -5)
+		run_files[run]['nerix_160404_1621.root'] = (4.50, 2.356, -5)
+		
+		run_files[run]['nerix_160404_1649.root'] = (4.50, 1.054, -2)
+		
+		run_files[run]['nerix_160404_1802.root'] = (4.50, 0.345, -6)
+		run_files[run]['nerix_160405_0034.root'] = (4.50, 0.700, -6)
+		run_files[run]['nerix_160405_0625.root'] = (4.50, 1.054, -6)
+		run_files[run]['nerix_160405_0737.root'] = (4.50, 1.500, -6)
+		run_files[run]['nerix_160405_0915.root'] = (4.50, 2.356, -6)
+		
+		run_files[run]['nerix_160405_1054.root'] = (4.50, 1.054, -4)
+		
+		
 		
 		
 		# coincidence
 
 		# EJs further
-		"""
+		
 		run_files[run]['nerix_151022_1753.root'] = (4.50, 1.054, {45:[0,1], 30:[2,3]})
 		run_files[run]['nerix_151023_0830.root'] = (4.50, 1.054, {45:[0,1], 30:[2,3]})
 		#run_files[run]['nerix_151027_1609.root'] = (4.50, 1.054, 45) # TAC off
@@ -965,7 +1131,7 @@ for run in run_files:
 		run_files[run]['nerix_151123_1559.root'] = (4.50, 1.054, {45:[0,1], 30:[2,3]})
 		"""
 		
-
+		"""
 		#run_files[run]['nerix_151125_1227.root'] = (4.50, 2.356, {45:[0,1], 30:[2,3]})
 		run_files[run]['nerix_151125_1407.root'] = (4.50, 2.356, {45:[0,1], 30:[2,3]})
 		run_files[run]['nerix_151125_1823.root'] = (4.50, 2.356, {45:[0,1], 30:[2,3]})
@@ -1072,17 +1238,50 @@ for run in run_files:
 		
 		run_files[run]['nerix_160224_1542.root'] = (4.50, 2.356, {62:[2,3], 35:[0,1]})
 		run_files[run]['nerix_160226_1014.root'] = (4.50, 2.356, {62:[2,3], 35:[0,1]})
-		run_files[run]['nerix_160226_1014.root'] = (4.50, 2.356, {62:[2,3], 35:[0,1]})
-		
-		
+		run_files[run]['nerix_160226_1455.root'] = (4.50, 2.356, {62:[2,3], 35:[0,1]})
+		run_files[run]['nerix_160226_1610.root'] = (4.50, 2.356, {62:[2,3], 35:[0,1]})
+		run_files[run]['nerix_160228_1801.root'] = (4.50, 2.356, {62:[2,3], 35:[0,1]})
 		
 		
 		# ***************
 		
+		"""
+		run_files[run]['nerix_160301_1726.root'] = (4.50, 1.054, {2300:[0,1], 3000:[2,3]})
+		run_files[run]['nerix_160302_0840.root'] = (4.50, 1.054, {2300:[0,1], 3000:[2,3]})
+		run_files[run]['nerix_160302_1401.root'] = (4.50, 1.054, {2300:[0,1], 3000:[2,3]})
+		run_files[run]['nerix_160302_1659.root'] = (4.50, 1.054, {2300:[0,1], 3000:[2,3]})
+		run_files[run]['nerix_160303_0938.root'] = (4.50, 1.054, {2300:[0,1], 3000:[2,3]})
+		run_files[run]['nerix_160307_1154.root'] = (4.50, 1.054, {2300:[0,1], 3000:[2,3]})
+		"""
 		
 		
+		# AFTER KNF pump and getter switch
 		
+		# 0.19"
+		"""
+		run_files[run]['nerix_160323_1653.root'] = (4.50, 1.054, {2300:[0,1], 3000:[2,3]})
+		run_files[run]['nerix_160323_1657.root'] = (4.50, 1.054, {2300:[0,1], 3000:[2,3]})
+		run_files[run]['nerix_160324_1448.root'] = (4.50, 1.054, {2300:[0,1], 3000:[2,3]})
+		run_files[run]['nerix_160324_1454.root'] = (4.50, 1.054, {2300:[0,1], 3000:[2,3]})
+		"""
 		
+		# 0.25"
+		#run_files[run]['nerix_160330_1726.root'] = (4.50, 1.054, {2300:[0,1], 3000:[2,3]})
+		#run_files[run]['nerix_160330_1747.root'] = (4.50, 1.054, {2300:[0,1], 3000:[2,3]})
+		#run_files[run]['nerix_160331_1629.root'] = (4.50, 1.054, {2300:[0,1], 3000:[2,3]})
+		#run_files[run]['nerix_160401_1628.root'] = (4.50, 1.054, {2300:[0,1], 3000:[2,3]})
+		#run_files[run]['nerix_160403_0936.root'] = (4.50, 1.054, {2300:[0,1], 3000:[2,3]})
+		
+		#run_files[run]['nerix_160405_1145.root'] = (4.50, 1.054, {2300:[0,1], 3000:[2,3]})
+		#run_files[run]['nerix_160405_1604.root'] = (4.50, 1.054, {2300:[0,1], 3000:[2,3]})
+		#run_files[run]['nerix_160406_0947.root'] = (4.50, 1.054, {2300:[0,1], 3000:[2,3]})
+		#run_files[run]['nerix_160406_1556.root'] = (4.50, 1.054, {2300:[0,1], 3000:[2,3]})
+		#run_files[run]['nerix_160407_0916.root'] = (4.50, 1.054, {2300:[0,1], 3000:[2,3]})
+		
+		#run_files[run]['nerix_160407_1629.root'] = (4.50, 1.054, {2300:[0,1], 3000:[2,3]})
+		#run_files[run]['nerix_160407_1712.root'] = (4.50, 1.054, {2300:[0,1], 3000:[2,3]})
+		run_files[run]['nerix_160408_0916.root'] = (4.50, 1.054, {2300:[0,1], 3000:[2,3]})
+
 		
 		# TRIAL with EJ in place of TAC in trigger
 		"""

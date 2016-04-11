@@ -1,3 +1,4 @@
+#pathToData = '/Users/Matt/Desktop/Xenon/neriX/data/'
 pathToData = '/Users/Matt/Desktop/Xenon/neriX/data/'
 pathToModules = '/Users/Matt/Desktop/Xenon/python_modules/'
 

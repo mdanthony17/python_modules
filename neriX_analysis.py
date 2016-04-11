@@ -8,11 +8,33 @@ import neriX_config, neriX_datasets, neriX_pmt_gain_corrections
 import threading
 import numpy as np
 from rootpy.io.pickler import dump, load
+from contextlib import contextmanager
+import rootpy.compiled as C
+
+C.register_file('neriX_gain_correction.C', ['GetGainCorrectionBottomPMT', 'GetGainCorrectionErrorBottomPMT'])
 
 
 # MUST INCLUDE TYPES TO AVOID SEG FAULT
 stl.vector(stl.vector('float'))
 stl.vector(stl.vector('int'))
+
+# suppress stdout temporarily with the following
+# use is the following:
+# with suppress_stdout():
+#	function_call_here()
+@contextmanager
+def suppress_stdout():
+    with open(os.devnull, 'w') as devnull:
+        old_stdout = sys.stdout
+        sys.stdout = devnull
+        old_stderr = sys.stderr
+        sys.stderr = devnull
+        try:  
+            yield
+        finally:
+            sys.stdout = old_stdout
+            sys.stderr = old_stderr
+
 
 def success_message(message):
 	click.echo(click.style('\n\nSUCCESS: %s\n\n' % message, fg='green', bold=True))
@@ -20,7 +42,7 @@ def success_message(message):
 
 
 def warning_message(message):
-	click.echo(click.style('\n\nWARNING: %s\n\n' % message, fg='yellow', bold=True, blink=True))
+	click.echo(click.style('\n\nWARNING: %s\n\n' % message, fg='yellow', bold=True, blink=False))
 
 
 def failure_message(message):
@@ -29,7 +51,19 @@ def failure_message(message):
 
 
 def debug_message(message):
-	click.echo(click.style('\n\nDEBUG: %s\n\n' % message, fg='orange', bold=True))
+	click.echo(click.style('\n\nDEBUG: %s\n\n' % message, fg='white', bold=True))
+
+
+
+def get_gain_correction_err(run, unixtime):
+	return C.GetGainCorrectionErrorBottomPMT(run, unixtime)
+
+
+
+
+def get_gain_correction(run, unixtime):
+	return C.GetGainCorrectionBottomPMT(run, unixtime)
+
 
 
 
@@ -48,7 +82,7 @@ def pull_all_files_given_parameters(run, anodeSetting, cathodeSetting, degreeSet
 		else:
 			if lParameters == (anodeSetting, cathodeSetting, degreeSetting):
 				lFilesToLoad.append(file)
-
+	
 	return lFilesToLoad
 
 
@@ -64,7 +98,7 @@ def save_plot(lDirectories, canvas, filename, lFileTypes=['png', 'C'], batch_mod
 		
 		if response != 'y':
 			return
-	
+
 	
 	sPath = './'
 	for directory in lDirectories:
@@ -79,16 +113,17 @@ def save_plot(lDirectories, canvas, filename, lFileTypes=['png', 'C'], batch_mod
 
 
 
-def write_root_object(lDirectories, object, filename):
+def write_root_object(lDirectories, object, filename, batch_mode=False):
 	# arguments should be in the following form:
 	# path_to_image = ./lDirectories[0]/lDirectories[1]/<filename>.p
 	
-	print '\n'
-	response = raw_input('Would you like to save %s to a file?  If so, please enter "y" otherwise press enter: ' % str(object))
-	print '\n'
-	
-	if response != 'y':
-		return
+	if not batch_mode:
+		print '\n'
+		response = raw_input('Would you like to save %s to a file?  If so, please enter "y" otherwise press enter: ' % str(object))
+		print '\n'
+		
+		if response != 'y':
+			return
 	
 	sPath = './'
 	for directory in lDirectories:
@@ -171,7 +206,7 @@ def create_graph_with_confidence_interval_for_fit(graphUsedForFit, virtualFitter
 		aXValues[i] = value
 	
 	gConfidenceInterval = root.TGraphErrors(numPoints, aXValues, aYValues)
-	virtualFitter.GetConfidenceIntervals(gConfidenceInterval)
+	virtualFitter.GetConfidenceIntervals(gConfidenceInterval, 0.95)
 
 	# grab Y values
 	#print gConfidenceInterval.GetErrorY(5)
@@ -372,20 +407,32 @@ class neriX_analysis:
 			self.lT1[i].SetAlias('s1asym', '(S1sTotBottom[0]-S1sTotTop[0])/S1sTot[0]')
 			self.lT1[i].SetAlias('s2asym', '(S2sTotBottom[0]-S2sTotTop[0])/S2sTot[0]')
 			
-			if self.cathodeSetting == 0.345:
-				self.lT1[i].SetAlias('Z','-1.446*dt')
-			elif self.cathodeSetting == 0.700:
-				self.lT1[i].SetAlias('Z','-1.559*dt')
-			elif self.cathodeSetting == 1.054:
-				self.lT1[i].SetAlias('Z','-1.644*dt')
-			elif self.cathodeSetting == 1.500:
-				self.lT1[i].SetAlias('Z','-1.726*dt')
-			elif self.cathodeSetting == 2.356:
-				self.lT1[i].SetAlias('Z','-1.839*dt')
-			elif self.cathodeSetting == 5.500:
-				self.lT1[i].SetAlias('Z','-2.233*dt')
-			else:
-				print 'Incorrect field entered - cannot correct Z'
+			if self.runNumber == 15:
+				if self.cathodeSetting == 0.345:
+					self.lT1[i].SetAlias('Z','-1.446*dt')
+				elif self.cathodeSetting == 0.700:
+					self.lT1[i].SetAlias('Z','-1.559*dt')
+				elif self.cathodeSetting == 1.054:
+					self.lT1[i].SetAlias('Z','-1.644*dt')
+				elif self.cathodeSetting == 1.500:
+					self.lT1[i].SetAlias('Z','-1.726*dt')
+				elif self.cathodeSetting == 2.356:
+					self.lT1[i].SetAlias('Z','-1.839*dt')
+				elif self.cathodeSetting == 5.500:
+					self.lT1[i].SetAlias('Z','-2.233*dt')
+				else:
+					print 'Incorrect field entered - cannot correct Z'
+			elif self.runNumber == 10 or self.runNumber == 11:
+				if self.cathodeSetting == 0.345:
+					self.lT1[i].SetAlias('Z','-1.511*dt')
+				elif self.cathodeSetting == 1.054:
+					self.lT1[i].SetAlias('Z','-1.717*dt')
+				elif self.cathodeSetting == 2.356:
+					self.lT1[i].SetAlias('Z','-1.958*dt')
+				elif self.cathodeSetting == 5.500:
+					self.lT1[i].SetAlias('Z','-2.208*dt')
+				else:
+					print 'Incorrect field entered - cannot correct Z'
 
 			#will need to change these constants depending on Ge Calibratio
 			self.lT1[i].SetAlias('GeEnergy',self.__GERMANIUM_SLOPE + '*GeHeight[0] + ' + self.__GERMANIUM_INTERCEPT)
@@ -395,7 +442,8 @@ class neriX_analysis:
 			
 			
 			# need to create compiled function for ct alias
-			self.lT1[i].SetAlias('ctS1sTotBottom','(GetGainCorrectionBottomPMT(' + str(self.runNumber) + ', TimeSec))*czS1sTotBottom')
+			self.lT1[i].SetAlias('ctS1sTotBottom','1./(GetGainCorrectionBottomPMT(' + str(self.runNumber) + ', TimeSec))*czS1sTotBottom')
+			self.lT1[i].SetAlias('ctS2sTotBottom','1./(GetGainCorrectionBottomPMT(' + str(self.runNumber) + ', TimeSec))*S2sTotBottom')
 			self.lT1[i].SetAlias('cpS1sTotBottom','(1./GetPosCorrectionS1(' + str(self.runNumber) + ', R, Z))*S1sTotBottom')
 			self.lT1[i].SetAlias('cpS2sTotBottom','(1./GetPosCorrectionS2(' + str(self.runNumber) + ', R, Z))*S2sTotBottom')
 
@@ -475,13 +523,33 @@ class neriX_analysis:
 
 
 	def add_z_cut(self, lowZ = -22., highZ = -4.):
-		Xz = '((Z > ' + str(lowZ) + ') && (Z < '+ str(highZ) + '))'
+		if self.runNumber == 10 or self.runNumber == 11:
+			if self.cathodeSetting == 0.345:
+				Xz = '((Z > -25.1) && (Z < -3.75))'
+			elif self.cathodeSetting == 1.054:
+				Xz = '((Z > -25.5) && (Z < -4.1))'
+			elif self.cathodeSetting == 2.356:
+				Xz = '((Z > -25.8) && (Z < -4.5))'
+			elif self.cathodeSetting == 5.500:
+				Xz = '((Z > -26.3) && (Z < -4.9))'
+		else:
+			Xz = '((Z > ' + str(lowZ) + ') && (Z < '+ str(highZ) + '))'
 		self.Xrun = self.Xrun + ' && ' + Xz
 
 
 
 	def add_radius_cut(self, lowRadius = 0., highRadius = 20.):
-		Xradius = '((R > ' + str(lowRadius) + ') && (R < '+ str(highRadius) + '))'
+		if self.runNumber == 10 or self.runNumber == 11:
+			if self.cathodeSetting == 0.345:
+				Xradius = '(R < 21.)'
+			elif self.cathodeSetting == 1.054:
+				Xradius = '(R < 21.)'
+			elif self.cathodeSetting == 2.356:
+				Xradius = '(R < 21.)'
+			elif self.cathodeSetting == 5.500:
+				Xradius = '(R < 21.)'
+		else:
+			Xradius = '((R > ' + str(lowRadius) + ') && (R < '+ str(highRadius) + '))'
 		self.Xrun = self.Xrun + ' && ' + Xradius
 		
 
@@ -629,6 +697,7 @@ class neriX_analysis:
 			self.Xrun += ' && ( (Alt$(ratio_s2tot1_s2top0,0.) < 0.06 || (((Alt$(Z,3.)>2.0 && Alt$(Z,3.)<5.0) || Alt$(Z,30.)>24.5) && (Alt$(ratio_s2tot1_s2top0,0.) < 0.1))) )'
 		elif self.runNumber == 15:
 			self.Xrun += ' && ( Alt$(S2sTotBottom[1], -1) < 50 )'
+			#self.Xrun += ' && ( Alt$(S2sTotBottom[1], -1) < 0.1*S2sTotBottom[0] )'
 	
 		
 		
@@ -843,6 +912,10 @@ class neriX_analysis:
 
 	def get_event_list(self, index=0):
 		return self.lEList[index]
+
+
+
+
 
 
 
