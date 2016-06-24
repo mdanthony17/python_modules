@@ -1,3 +1,37 @@
+
+# example using pagelocked memory (pinned)
+
+"""
+##CODE START######################
+import pycuda.driver as drv
+
+drv.init()
+dev = drv.Device(0)
+ctx = dev.make_context(drv.ctx_flags.SCHED_AUTO | drv.ctx_flags.MAP_HOST)
+
+k = pycuda.compiler.SourceModule(\"""
+__global__ void krnl(float* a) {
+  int i = blockIdx.x * blockDim.x + threadIdx.x;
+  a[i] = i;
+}
+\""").get_function("krnl")
+
+a = drv.pagelocked_empty((10, 10), numpy.float32, mem_flags=drv.host_alloc_flags.DEVICEMAP)
+
+aa = numpy.intp(a.base.get_device_pointer())
+k(aa, grid=(100,1), block=(1,1,1))
+
+ctx.pop()
+
+
+##CODE END######################
+"""
+
+
+
+
+
+
 cuda_full_observables_production_code ="""
 #include <curand_kernel.h>
 

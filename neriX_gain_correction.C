@@ -36,6 +36,13 @@ Double_t GetGainCorrectionBottomPMT(int run, double unixtime)
 		else
 			return 1.0;
 	}
+	else if (run == 16)
+	{
+		if ((unixtime > 1458225120.0) && (unixtime < 1463497680.0))
+			 return ((-0.00335168443265*unixtime + 5777477.66259)/1480000.0);
+		else
+			return 1.0;
+	}
 	else
 		return 1.0;
 }
@@ -63,6 +70,13 @@ Double_t GetGainCorrectionErrorBottomPMT(int run, double unixtime)
 			return (sqrt(pow((unixtime-1.41641345e+09)*(0.0532606209),2) + pow(240915.163,2) + 2.*(unixtime-1.41641345e+09)*(-12804.588))/847000.);
 		if ((unixtime-1.41641345e+09) >= 4860402 && (unixtime-1.41641345e+09) < 6652057)
 			return (sqrt(pow((unixtime-1.41641345e+09)*(0.0218790998),2) + pow(125776.959,2) + 2.*(unixtime-1.41641345e+09)*(-2731.76023))/847000.);
+		else
+			return 1.0;
+	}
+	else if (run == 16)
+	{
+		if ((unixtime > 1458225120.0) && (unixtime < 1463497680.0))
+			return (sqrt(pow(19331.2063158,2) + pow(unixtime*1.32313493232e-05,2) + 2*-0.255267408625*unixtime)/1480000.0);
 		else
 			return 1.0;
 	}

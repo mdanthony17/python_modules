@@ -10,6 +10,7 @@ import numpy as np
 from rootpy.io.pickler import dump, load
 from contextlib import contextmanager
 import rootpy.compiled as C
+import root_numpy
 
 C.register_file('neriX_gain_correction.C', ['GetGainCorrectionBottomPMT', 'GetGainCorrectionErrorBottomPMT'])
 
@@ -80,10 +81,55 @@ def pull_all_files_given_parameters(run, anodeSetting, cathodeSetting, degreeSet
 			if lParameters[0] == anodeSetting and lParameters[1] == cathodeSetting and degreeSetting in lParameters[degreeIndex]:
 				lFilesToLoad.append(file)
 		else:
-			if lParameters == (anodeSetting, cathodeSetting, degreeSetting):
+			if lParameters == [anodeSetting, cathodeSetting, degreeSetting]:
 				lFilesToLoad.append(file)
 	
 	return lFilesToLoad
+
+
+
+def print_info_for_processing_multiple_files(run, lAnodeSettings=None, lCathodeSettings=None, lDegreeSettings=None, numProcessors = 20):
+	
+	if lAnodeSettings == None:
+		lAnodeSettings = [4.500]
+	elif isinstance(lAnodeSettings, str):
+		lAnodeSettings = [lAnodeSettings]
+
+	if lCathodeSettings == None:
+		lCathodeSettings = [0.345, 0.700, 1.054, 1.500, 2.356]
+	elif isinstance(lCathodeSettings, str):
+		lCathodeSettings = [lCathodeSettings]
+
+	if lDegreeSettings == None:
+		lDegreeSettings = [-1, -2, -4, -5, -6, -10]
+	elif isinstance(lDegreeSettings, str):
+		lDegreeSettings = [lDegreeSettings]
+
+	lFilesToLoad = []
+
+	for anodeSetting in lAnodeSettings:
+		for cathodeSetting in lCathodeSettings:
+			for degreeSetting in lDegreeSettings:
+				lFilesToLoad += pull_all_files_given_parameters(run, anodeSetting, cathodeSetting, degreeSetting)
+
+	lFilesToLoad.sort()
+
+	#for i in xrange(len(lFilesToLoad)):
+	#	lFilesToLoad[i] = lFilesToLoad[i][:-5]
+
+	d_xml_files = {(16, -1):'nerix-cs-na-low-voltages-run_16.xml',
+				   (16, -5):'nerix-cs-na-low-voltages-run_16.xml',
+				   (16, -6):'nerix-bkg-low-voltages-run_15.xml',
+				   (16, -4):'nerix-default-run_16.xml',
+				   (16, -2):'nerix-bkg-low-voltages-run_15.xml',
+				   (16, -10):'nerix-gas-gain-run_16.xml'}
+
+	s_for_processing_script = ''
+	for file in lFilesToLoad:
+		degreeSetting = neriX_datasets.run_files[run][file][2]
+		s_for_processing_script += 'call(["./scripts/process.py", "-f", "%s", "%s", "%d"])\n' % (d_xml_files[(run, degreeSetting)], file[:-5], numProcessors)
+
+	print s_for_processing_script
 
 
 
@@ -174,6 +220,73 @@ def convert_name_to_unix_time(fileName):
 
 
 
+# profiles a 2d histogram using the median
+# rather than the mean
+def profile_y_median(hist_to_profile, percent_from_median=34.1):
+	num_bins_x = hist_to_profile.nbins(0)
+	num_bins_y = hist_to_profile.nbins(1)
+	
+	bounds_x = hist_to_profile.bounds(0)
+	bounds_y = hist_to_profile.bounds(1)
+	
+	step_size_x = (bounds_x[1] - bounds_x[0]) / float(num_bins_x)
+	step_size_y = (bounds_y[1] - bounds_y[0]) / float(num_bins_y)
+	
+	bin_centers_x = np.linspace(bounds_x[0] + step_size_x/2., bounds_x[1] - step_size_x/2., num=num_bins_x)
+	bin_centers_y = np.linspace(bounds_y[0] + step_size_y/2., bounds_y[1] - step_size_y/2., num=num_bins_y)
+
+	aHist = root_numpy.hist2array(hist_to_profile, include_overflow=False)
+
+	# outer loop are columns (what we want)!
+	# inner array is small to large
+	
+	aXErrLow = np.asarray([step_size_x/2. for i in xrange(num_bins_x)])
+	aXErrHigh = np.asarray([step_size_x/2. for i in xrange(num_bins_x)])
+	
+	aYValues = np.zeros(num_bins_x)
+	aYErrLow = np.zeros(num_bins_x)
+	aYErrHigh = np.zeros(num_bins_x)
+
+	lIndicesToDelete = []
+	for slice_number, x_slice in enumerate(aHist):
+		points_in_slice = np.zeros(int(np.sum(x_slice)))
+		index_counter = 0
+		for i, bin_count in enumerate(x_slice):
+			for j in xrange(bin_count):
+				points_in_slice[index_counter] = bin_centers_y[i]
+				index_counter += 1
+		if index_counter > 2:
+			aYValues[slice_number] = np.median(points_in_slice)
+			low_err, high_err = np.percentile(points_in_slice, [50-percent_from_median, 50+percent_from_median])
+			aYErrLow[slice_number], aYErrHigh[slice_number] = aYValues[slice_number]-low_err, high_err-aYValues[slice_number]
+		else:
+			lIndicesToDelete.append(slice_number)
+
+	# delete points that are "empty"
+	num_bins_x -= len(lIndicesToDelete)
+	bin_centers_x = np.delete(bin_centers_x, lIndicesToDelete)
+	aYValues = np.delete(aYValues, lIndicesToDelete)
+	aXErrLow = np.delete(aXErrLow, lIndicesToDelete)
+	aXErrHigh = np.delete(aXErrHigh, lIndicesToDelete)
+	aYErrLow = np.delete(aYErrLow, lIndicesToDelete)
+	aYErrHigh = np.delete(aYErrHigh, lIndicesToDelete)
+
+
+	return (num_bins_x, bin_centers_x, aYValues, aXErrLow, aXErrHigh, aYErrLow, aYErrHigh)
+
+
+
+def mad(arr):
+    """ Median Absolute Deviation: a "Robust" version of standard deviation.
+        Indices variabililty of the sample.
+        https://en.wikipedia.org/wiki/Median_absolute_deviation 
+    """
+    arr = np.ma.array(arr).compressed() # should be faster to not use masked arrays.
+    med = np.median(arr)
+    return np.median(np.abs(arr - med))
+
+
+
 def create_canvas_for_multiple_histograms(lHists):
 	# lHist is a list of dictionaries that will be
 	# called dHists
@@ -193,7 +306,7 @@ def create_canvas_for_multiple_histograms(lHists):
 
 # returns all arguments needed to create TGraphAsymmErrors
 # simply use *on the returned set to unpack them
-def create_graph_with_confidence_interval_for_fit(graphUsedForFit, virtualFitter):
+def create_graph_with_confidence_interval_for_fit(graphUsedForFit, virtualFitter, confidence_level=0.68):
 	numPoints = graphUsedForFit.GetN()
 	
 	# grab X values
@@ -206,7 +319,7 @@ def create_graph_with_confidence_interval_for_fit(graphUsedForFit, virtualFitter
 		aXValues[i] = value
 	
 	gConfidenceInterval = root.TGraphErrors(numPoints, aXValues, aYValues)
-	virtualFitter.GetConfidenceIntervals(gConfidenceInterval, 0.95)
+	virtualFitter.GetConfidenceIntervals(gConfidenceInterval, confidence_level)
 
 	# grab Y values
 	#print gConfidenceInterval.GetErrorY(5)
@@ -407,19 +520,22 @@ class neriX_analysis:
 			self.lT1[i].SetAlias('s1asym', '(S1sTotBottom[0]-S1sTotTop[0])/S1sTot[0]')
 			self.lT1[i].SetAlias('s2asym', '(S2sTotBottom[0]-S2sTotTop[0])/S2sTot[0]')
 			
-			if self.runNumber == 15:
+			if self.runNumber == 15 or self.runNumber == 16:
+				# Z is taken from the GATE in runs 15 and 16
+				self.dt_offset_gate = neriX_datasets.d_dt_offset_gate[self.runNumber]
+			
 				if self.cathodeSetting == 0.345:
-					self.lT1[i].SetAlias('Z','-1.446*dt')
+					self.lT1[i].SetAlias('Z','-1.56*(dt-%f)' % self.dt_offset_gate)
 				elif self.cathodeSetting == 0.700:
-					self.lT1[i].SetAlias('Z','-1.559*dt')
+					self.lT1[i].SetAlias('Z','-1.68*(dt-%f)' % self.dt_offset_gate)
 				elif self.cathodeSetting == 1.054:
-					self.lT1[i].SetAlias('Z','-1.644*dt')
+					self.lT1[i].SetAlias('Z','-1.77*(dt-%f)' % self.dt_offset_gate)
 				elif self.cathodeSetting == 1.500:
-					self.lT1[i].SetAlias('Z','-1.726*dt')
+					self.lT1[i].SetAlias('Z','-1.87*(dt-%f)' % self.dt_offset_gate)
 				elif self.cathodeSetting == 2.356:
-					self.lT1[i].SetAlias('Z','-1.839*dt')
+					self.lT1[i].SetAlias('Z','-2.00*(dt-%f)' % self.dt_offset_gate)
 				elif self.cathodeSetting == 5.500:
-					self.lT1[i].SetAlias('Z','-2.233*dt')
+					self.lT1[i].SetAlias('Z','-2.233*(dt-%f)' % self.dt_offset_gate)
 				else:
 					print 'Incorrect field entered - cannot correct Z'
 			elif self.runNumber == 10 or self.runNumber == 11:
@@ -442,10 +558,23 @@ class neriX_analysis:
 			
 			
 			# need to create compiled function for ct alias
-			self.lT1[i].SetAlias('ctS1sTotBottom','1./(GetGainCorrectionBottomPMT(' + str(self.runNumber) + ', TimeSec))*czS1sTotBottom')
-			self.lT1[i].SetAlias('ctS2sTotBottom','1./(GetGainCorrectionBottomPMT(' + str(self.runNumber) + ', TimeSec))*S2sTotBottom')
-			self.lT1[i].SetAlias('cpS1sTotBottom','(1./GetPosCorrectionS1(' + str(self.runNumber) + ', R, Z))*S1sTotBottom')
-			self.lT1[i].SetAlias('cpS2sTotBottom','(1./GetPosCorrectionS2(' + str(self.runNumber) + ', R, Z))*S2sTotBottom')
+			if self.runNumber == 10 or self.runNumber == 11:
+				self.lT1[i].SetAlias('ctS1sTotBottom','1./(GetGainCorrectionBottomPMT(' + str(self.runNumber) + ', TimeSec))*czS1sTotBottom')
+				self.lT1[i].SetAlias('ctS2sTotBottom','1./(GetGainCorrectionBottomPMT(' + str(self.runNumber) + ', TimeSec))*S2sTotBottom')
+			
+			elif self.runNumber == 16:
+				self.lT1[i].SetAlias('ctS1sTotBottom','1./(GetGainCorrectionBottomPMT(' + str(self.runNumber) + ', TimeSec))*S1sTotBottom')
+				self.lT1[i].SetAlias('ctS2sTotBottom','1./(GetGainCorrectionBottomPMT(' + str(self.runNumber) + ', TimeSec))*S2sTotBottom')
+			
+				self.lT1[i].SetAlias('cpS1sTotBottom','( 1. / (8.49e-1 - 1.06e-2*Z) )*ctS1sTotBottom')
+				self.lT1[i].SetAlias('cpS2sTotBottom','(1.)*ctS2sTotBottom')
+			
+			else:
+				self.lT1[i].SetAlias('ctS1sTotBottom','1./(GetGainCorrectionBottomPMT(' + str(self.runNumber) + ', TimeSec))*S1sTotBottom')
+				self.lT1[i].SetAlias('ctS2sTotBottom','1./(GetGainCorrectionBottomPMT(' + str(self.runNumber) + ', TimeSec))*S2sTotBottom')
+			
+				self.lT1[i].SetAlias('cpS1sTotBottom','(1./GetPosCorrectionS1(' + str(self.runNumber) + ', R, Z))*ctS1sTotBottom')
+				self.lT1[i].SetAlias('cpS2sTotBottom','(1./GetPosCorrectionS2(' + str(self.runNumber) + ', R, Z))*ctS2sTotBottom')
 
 		
 		self.Xrun = '(EventId != -1)' #add a cut so that add statements work
@@ -532,14 +661,25 @@ class neriX_analysis:
 				Xz = '((Z > -25.8) && (Z < -4.5))'
 			elif self.cathodeSetting == 5.500:
 				Xz = '((Z > -26.3) && (Z < -4.9))'
+		if self.runNumber == 15 or self.runNumber == 16:
+			Xz = '((Z > -24.3) && (Z < -1.0))'
 		else:
 			Xz = '((Z > ' + str(lowZ) + ') && (Z < '+ str(highZ) + '))'
 		self.Xrun = self.Xrun + ' && ' + Xz
 
 
 
-	def add_radius_cut(self, lowRadius = 0., highRadius = 20.):
-		if self.runNumber == 10 or self.runNumber == 11:
+	def add_radius_cut(self, lowRadius = None, highRadius = None):
+		useDefault = False
+		if lowRadius == None and highRadius == None:
+			useDefault = True
+		
+		if lowRadius == None:
+			lowRadius = 0.
+		if highRadius == None:
+			highRadius = 20.
+	
+		if useDefault and (self.runNumber == 10 or self.runNumber == 11):
 			if self.cathodeSetting == 0.345:
 				Xradius = '(R < 21.)'
 			elif self.cathodeSetting == 1.054:
@@ -587,9 +727,10 @@ class neriX_analysis:
 			elif channel == 1:
 				Xneutron += ' || ((psd1 > 0.15) && (LiqSciHeight[1] > 0.35 && LiqSciHeight[1] < 1.0))'
 			elif channel == 2:
-				Xneutron += ' || ((psd2 > 0.2) && (LiqSciHeight[2] > 0.4 && LiqSciHeight[2] < 1.4))'
+				Xneutron += ' || ((psd2 > 0.2 && psd2 < 0.5) && (LiqSciHeight[2] > 0.4 && LiqSciHeight[2] < 1.4))'
 			elif channel == 3:
-				Xneutron += ' || ((psd3 > 0.2) && (LiqSciHeight[3] > 0.4 && LiqSciHeight[3] < 1.4))'
+				Xneutron += ' || ((psd3 > 0.24 && psd3 < 0.5) && (LiqSciHeight[3] > 0.4 && LiqSciHeight[3] < 1.35))'
+				#Xneutron += ' || ((psd3 > 0.2) && (LiqSciHeight[3] > 0.4 && LiqSciHeight[3] < 1.4))'
 			else:
 				print 'neriX_analysis not able to handle EJ channel ' + str(channel) + '.  Please check input and try again.'
 				sys.exit()
@@ -667,7 +808,7 @@ class neriX_analysis:
 	def add_s1_liqsci_peak_cut(self, lEJChannels=[0, 1, 2, 3]):
 		Xpeak = '( '
 		for channel in lEJChannels:
-			Xpeak += '( (LiqSciPeak[%d] - S1sPeak[0]) < %d && (LiqSciPeak[%d] - S1sPeak[0]) > %d ) || ' % (channel, self.lLiqSciS1DtRange[1], channel, self.lLiqSciS1DtRange[0])
+			Xpeak += '( (LiqSciPeak[%d] - S1sPeak[]) < %d && (LiqSciPeak[%d] - S1sPeak[]) > %d ) || ' % (channel, self.lLiqSciS1DtRange[1], channel, self.lLiqSciS1DtRange[0])
 		Xpeak = Xpeak[:-4] + ' )'
 		self.Xrun = self.Xrun + ' && ' + Xpeak
 	
@@ -695,7 +836,7 @@ class neriX_analysis:
 	def add_single_scatter_cut(self):
 		if self.runNumber == 10 or self.runNumber == 11:
 			self.Xrun += ' && ( (Alt$(ratio_s2tot1_s2top0,0.) < 0.06 || (((Alt$(Z,3.)>2.0 && Alt$(Z,3.)<5.0) || Alt$(Z,30.)>24.5) && (Alt$(ratio_s2tot1_s2top0,0.) < 0.1))) )'
-		elif self.runNumber == 15:
+		elif self.runNumber == 15 or self.runNumber == 16:
 			self.Xrun += ' && ( Alt$(S2sTotBottom[1], -1) < 50 )'
 			#self.Xrun += ' && ( Alt$(S2sTotBottom[1], -1) < 0.1*S2sTotBottom[0] )'
 	
@@ -718,7 +859,7 @@ class neriX_analysis:
 		
 		
 	def add_cut(self, sCut):
-		self.Xrun += ' && ' + sCut
+		self.Xrun += ' && (%s)' % sCut
 		
 		
 		
@@ -813,7 +954,6 @@ class neriX_analysis:
 			if numThreads > len(self.lT1):
 				print 'More threads than files - reducing number of processors used'
 				numThreads = len(self.lT1)
-			lock = threading.Lock()
 			# set thread tasks
 			lThreadTasks = [[] for i in xrange(numThreads)]
 			for i in xrange(len(self.lFilenames)):
@@ -821,6 +961,7 @@ class neriX_analysis:
 
 			# call worker function
 			lThreads = [0. for i in xrange(numThreads)]
+			lock = threading.Lock()
 			for i in xrange(numThreads):
 				lThreads[i] = threading.Thread(target=self.thread_set_event_list, args=(lThreadTasks[i], lock, cuts))
 				lThreads[i].start()
