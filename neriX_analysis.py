@@ -145,10 +145,12 @@ def save_plot(lDirectories, canvas, filename, lFileTypes=['png', 'C'], batch_mod
 		if response != 'y':
 			return
 
-	
-	sPath = './'
-	for directory in lDirectories:
-		sPath += '%s/' % directory
+	if not isinstance(lDirectories, str):
+		sPath = './'
+		for directory in lDirectories:
+			sPath += '%s/' % directory
+	else:
+		sPath = lDirectories
 		
 	# check if path exists and make it if not
 	if not os.path.exists(sPath):
@@ -343,6 +345,19 @@ def create_graph_with_confidence_interval_for_fit(graphUsedForFit, virtualFitter
 
 	return (numPoints, aXValues, aYValues, aXErrLow, aXErrHigh, aYErrLow, aYErrHigh)
 
+
+
+def convert_2D_hist_to_matrix(h2D):
+	numBinsX = h2D.nbins(0)
+	numBinsY = h2D.nbins(1)
+	
+	a2D = np.zeros((numBinsX, numBinsY))
+
+	for i in xrange(numBinsX):
+		for j in xrange(numBinsY):
+			a2D[i,j] = h2D[i+1,j+1].value
+
+	return a2D
 
 
 

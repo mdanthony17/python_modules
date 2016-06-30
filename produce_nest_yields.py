@@ -2,7 +2,7 @@ import ROOT as root
 from math import exp, log, floor
 import sys
 
-def nest_nr_yields(keVNR, dfVcm):
+def nest_nr_mean_yields(keVNR, dfVcm):
 	# constants
 	rho = 2.9 # g/cc
 	tiParameter = 3.77e-2
@@ -21,6 +21,15 @@ def nest_nr_yields(keVNR, dfVcm):
 	numElectrons = (1.-recombinationProb)*numIons
 
 	return (numPhotons/float(keVNR), numElectrons/float(keVNR))
+
+
+
+#def nest_single_nr_mc(alpha, zeta, beta, gamma, delta, k_factor, eta, l_factor, c_factor):
+	# follow naming convention of NEST parameterization
+	# with the exception of k, lambda, and C because the names needed
+	# to change
+
+
 
 
 
@@ -156,5 +165,5 @@ def nest_er_yields(keVER, dfVcm):
 
 if __name__ == '__main__':
 	#print nest_nr_yields(2, 500)
-	print nest_er_yields(1, 1000)
+	print nest_er_yields(40, 1000)
 

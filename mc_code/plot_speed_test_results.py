@@ -18,11 +18,15 @@ l_lukes_gpu_time = [0.013091, 0.024379, 0.047134, 0.090737, 0.201780, 0.408195, 
 # Matt's GPU: GeForce GT 650M 1024 MB
 # core config = 384*32*16
 # GPLOPs = 641.3
+# bandwith = 28.8 GB/s
+# cache = 1024 MB
 # release: Mar 2012
 
 # Luke's GPU: GEForce GTX 480
 # core config = 480*60*48
 # GFLOPs = 1344.96
+# cache = 1536 MB
+# bandwith = 177.4 GB/s
 # release: Mar 2010
 
 # proposed GPU: GeForce GTX 970
@@ -30,6 +34,7 @@ l_lukes_gpu_time = [0.013091, 0.024379, 0.047134, 0.090737, 0.201780, 0.408195, 
 # cache = 4 GB
 # GFLOPS = 3494
 # bandwith = 200 GB/s
+# release: Nov 2014
 
 l_speed_increase_stock = np.divide(l_c_time, l_stock_gpu_time)
 l_speed_increase_luke = np.divide(l_c_time, l_lukes_gpu_time)
