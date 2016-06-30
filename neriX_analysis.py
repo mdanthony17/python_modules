@@ -391,7 +391,7 @@ class neriX_analysis:
 		lParameters = None
 		
 		gROOT.ProcessLine('.L ' + str(neriX_config.pathToModules) + 'neriX_gain_correction.C+')
-		gROOT.ProcessLine('.L ' + str(neriX_config.pathToModules) + 'neriX_pos_correction.C+')
+		#gROOT.ProcessLine('.L ' + str(neriX_config.pathToModules) + 'neriX_pos_correction.C+')
 
 		# check neriX_datasets for file and parameters
 		for i in xrange(len(lFilesToLoad)):

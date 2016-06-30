@@ -84,17 +84,17 @@ void full_matching_loop(int *seed, int *numTrials, float *meanField, float *aS1,
 		//  Calculate exciton to ion ratio
 		// ------------------------------------------------
 		
-		if (excitonToIonPar0RV > 0)
+		if (*excitonToIonPar0RV > 0)
 			excitonToIonPar0 = 1.240 + *excitonToIonPar0RV*0.079;
 		else
 			excitonToIonPar0 = 1.240 - *excitonToIonPar0RV*0.073;
 		
-		if (excitonToIonPar1RV > 0)
+		if (*excitonToIonPar1RV > 0)
 			excitonToIonPar1 = 0.0472 + *excitonToIonPar1RV*0.0088;
 		else
 			excitonToIonPar1 = 0.0472 - *excitonToIonPar1RV*0.0073;
 		
-		if (excitonToIonPar2RV > 0)
+		if (*excitonToIonPar2RV > 0)
 			excitonToIonPar2 = 239.0 + *excitonToIonPar2RV*28.0;
 		else
 			excitonToIonPar2 = 239.0 - *excitonToIonPar2RV*8.8;
