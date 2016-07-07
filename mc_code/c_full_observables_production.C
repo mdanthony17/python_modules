@@ -120,12 +120,14 @@ void full_matching_loop(int *seed, int *numTrials, float *aS1, float *aS2, float
 		// trig efficiency
 		//printf("S2: %f \n", mcS2);
 		//printf("eff: %f \n", 1. / (1 + exp(-trigEff[0]*(mcS2-trigEff[1]))));
-		if (r3.Rndm() > 1. / (1 + exp(-trigEff[0]*(mcS2-trigEff[1])))) continue;
+		//if (r3.Rndm() > 1. / (1 + exp(-trigEff[0]*(mcS2-trigEff[1])))) continue;
+		if (r3.Rndm() > 1. / (1 + exp(-(mcS2-trigEff[0])/trigEff[1]))) continue;
 		
 		// peak finder efficiency
 		//printf("S1: %f \n", mcS1);
 		//printf("eff: %f \n", 1. / (1. + exp(-(mcS1-pfEff[0])/pfEff[1])));
-		if (r3.Rndm() > 1. / (1. + exp(-(mcS1-pfEff[0])/pfEff[1]))) continue;
+		//if (r3.Rndm() > 1. / (1. + exp(-(mcS1-pfEff[0])/pfEff[1]))) continue;
+		if (r3.Rndm() > (1. - exp(-(mcS1-pfEff[0])/pfEff[1]))) continue;
 		
 		aS1[i] = mcS1;
 		aS2[i] = mcS2;

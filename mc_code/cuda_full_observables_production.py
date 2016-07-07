@@ -47,7 +47,7 @@ __device__ int gpu_binomial(curandState_t *rand_state, int num_successes, float 
 	return x;
 }
 
-__global__ void gpu_full_observables_production(int *seed, int *num_trials, float *aS1, float *aS2, float *aEnergy, float *photonYield, float *chargeYield, float *excitonToIonRatio, float *g1Value, float *extractionEfficiency, float *gasGainValue, float *gasGainWidth, float *speRes, float *intrinsicResS1, float *intrinsicResS2)
+__global__ void gpu_full_observables_production(int *seed, int *num_trials, float *aS1, float *aS2, float *aEnergy, float *photonYield, float *chargeYield, float *excitonToIonRatio, float *g1Value, float *extractionEfficiency, float *gasGainValue, float *gasGainWidth, float *speRes, float *intrinsicResS1, float *intrinsicResS2, float *tacEff, float *trigEff, float *pfEff)
 {
 
 	// start random number generator
@@ -55,8 +55,8 @@ __global__ void gpu_full_observables_production(int *seed, int *num_trials, floa
 	//const int iteration = blockIdx.x * blockDim.x + threadIdx.x;
 	const int iteration = blockIdx.x * blockDim.x * blockDim.y + threadIdx.y * blockDim.x + threadIdx.x;
 
-	curand_init(0, 0, 0, &s); // for debugging
-	//curand_init(*seed * iteration, 0, 0, &s);
+	//curand_init(0, 0, 0, &s); // for debugging
+	curand_init(*seed * iteration, 0, 0, &s);
 	
 	float probRecombination = (( (*excitonToIonRatio+1) * *photonYield )/(*photonYield+*chargeYield) - *excitonToIonRatio);
 
@@ -222,9 +222,37 @@ __global__ void gpu_full_observables_production(int *seed, int *num_trials, floa
 			return;
 		}
 		
+		//aS1[iteration] = mcS1;
+		//aS2[iteration] = mcS2;
+		
+		
+		// tof_efficiency
+		if (curand_uniform(&s) > (1. - exp(-tacEff[0] * mcS1)))
+		{	
+			aS1[iteration] = -1;
+			aS2[iteration] = -1;
+			return;
+		}
+		
+		// trig efficiency
+		if (curand_uniform(&s) > 1. / (1 + exp(-(mcS2-trigEff[0])/trigEff[1])))
+		{	
+			aS1[iteration] = -1;
+			aS2[iteration] = -1;
+			return;
+		}
+		
+		// peak finder efficiency
+		if (curand_uniform(&s) > (1. - exp(-(mcS1-pfEff[0])/pfEff[1])))
+		{	
+			aS1[iteration] = -1;
+			aS2[iteration] = -1;
+			return;
+		}
+		
 		aS1[iteration] = mcS1;
 		aS2[iteration] = mcS2;
-		
+		return;
 	
 	}
 
