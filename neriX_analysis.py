@@ -347,17 +347,64 @@ def create_graph_with_confidence_interval_for_fit(graphUsedForFit, virtualFitter
 
 
 
-def convert_2D_hist_to_matrix(h2D):
+def convert_2D_hist_to_matrix(h2D, dtype=None):
 	numBinsX = h2D.nbins(0)
 	numBinsY = h2D.nbins(1)
 	
-	a2D = np.zeros((numBinsX, numBinsY))
+	if dtype == None:
+		dtype = np.float64
+	
+	a2D = np.zeros((numBinsX, numBinsY), dtype=np.float32)
 
 	for i in xrange(numBinsX):
 		for j in xrange(numBinsY):
 			a2D[i,j] = h2D[i+1,j+1].value
 
 	return a2D
+
+
+
+def create_1d_fit_confidence_band(fit_function, best_fit_pars, covariance_matrix, lower_bound, upper_bound, confidence_level=0.68, num_bins=500, num_mc_points=int(5e4)):
+
+	# create arrays that will be used with TGraphAsymErrors
+	a_x_values = np.linspace(lower_bound, upper_bound, num_bins)
+	a_x_err_low = np.full(num_bins, (upper_bound-lower_bound)/float(num_bins)/2.)
+	a_x_err_high = np.full(num_bins, (upper_bound-lower_bound)/float(num_bins)/2.)
+	a_y_values = np.zeros(num_bins)
+	a_y_err_low = np.zeros(num_bins)
+	a_y_err_high = np.zeros(num_bins)
+	
+	a_current_bin = np.zeros(int(num_mc_points/num_bins))
+	
+	# draw random sample from multivariate gaussian defined by
+	# best fit parameters
+	a_parameters = np.random.multivariate_normal(best_fit_pars, covariance_matrix, size=int(num_mc_points/num_bins))
+	
+	# set percentiles and make array for results
+	l_percentiles = [50. - (100.*confidence_level)/2., 50., 50. + (100.*confidence_level)/2.]
+	a_quantiles = np.zeros(len(l_percentiles))
+
+	for bin_number in xrange(num_bins):
+		num_draws = int(num_mc_points/num_bins)
+		a_current_x_vals = np.random.uniform(a_x_values[bin_number]-a_x_err_low[bin_number], a_x_values[bin_number]+a_x_err_high[bin_number], size=num_draws)
+
+		for draw_number, value in enumerate(a_current_x_vals):
+			a_current_bin[draw_number] = fit_function(value, *a_parameters[draw_number])
+
+		a_quantiles = np.percentile(a_current_bin, l_percentiles)
+		#print a_quantiles
+		
+		a_y_values[bin_number] = a_quantiles[1]
+		a_y_err_low[bin_number] = a_quantiles[1] - a_quantiles[0]
+		a_y_err_high[bin_number] = a_quantiles[2] - a_quantiles[1]
+
+	g_conf_band = root.TGraphAsymmErrors(num_bins, a_x_values, a_y_values, a_x_err_low, a_x_err_high, a_y_err_low, a_y_err_high)
+	g_conf_band.SetLineColor(root.kBlue)
+	g_conf_band.SetFillColor(root.kBlue)
+	g_conf_band.SetFillStyle(3005)
+	return g_conf_band
+
+
 
 
 
