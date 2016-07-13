@@ -59,7 +59,7 @@ __global__ void test_gpu_find_lower_bound(int *num_elements, float *a_sorted, fl
 	int count = *num_elements;
 	int step;
 	
-	if (*search_value < a_sorted[0] || *search_value > a_sorted[*num_elements-1])
+	if (*search_value < a_sorted[0] || *search_value > a_sorted[*num_elements])
 	{
 		*index = -1;
 		return;
@@ -96,7 +96,7 @@ __device__ int gpu_find_lower_bound(int *num_elements, float *a_sorted, float se
 	int count = *num_elements;
 	int step;
 	
-	if (search_value < a_sorted[0] || search_value > a_sorted[*num_elements-1])
+	if (search_value < a_sorted[0] || search_value > a_sorted[*num_elements])
 	{
 		return -1;
 	}
