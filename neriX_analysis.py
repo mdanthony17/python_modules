@@ -382,6 +382,7 @@ def create_1d_fit_confidence_band(fit_function, best_fit_pars, covariance_matrix
 	
 	# set percentiles and make array for results
 	l_percentiles = [50. - (100.*confidence_level)/2., 50., 50. + (100.*confidence_level)/2.]
+	#print l_percentiles
 	a_quantiles = np.zeros(len(l_percentiles))
 
 	for bin_number in xrange(num_bins):
@@ -393,10 +394,15 @@ def create_1d_fit_confidence_band(fit_function, best_fit_pars, covariance_matrix
 
 		a_quantiles = np.percentile(a_current_bin, l_percentiles)
 		#print a_quantiles
+		a_quantiles[1] = fit_function(a_x_values[bin_number], *best_fit_pars)
+		#print a_quantiles[0], a_quantiles[1]
 		
 		a_y_values[bin_number] = a_quantiles[1]
 		a_y_err_low[bin_number] = a_quantiles[1] - a_quantiles[0]
 		a_y_err_high[bin_number] = a_quantiles[2] - a_quantiles[1]
+
+	#print a_y_err_low
+	#print a_y_err_high
 
 	g_conf_band = root.TGraphAsymmErrors(num_bins, a_x_values, a_y_values, a_x_err_low, a_x_err_high, a_y_err_low, a_y_err_high)
 	g_conf_band.SetLineColor(root.kBlue)

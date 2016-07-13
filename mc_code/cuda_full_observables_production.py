@@ -440,7 +440,7 @@ __global__ void gpu_full_observables_production_with_hist_spline(int *seed, int 
 		else
 			excitonToIonPar2 = 239.0 - *excitonToIonPar2RV*8.8;
 		
-		excitonToIonRatio = excitonToIonPar0*pow(*meanField,-excitonToIonPar1) * ( 1 - exp(-excitonToIonPar2 * 11.5*mcEnergy*pow(54, -7./3.)) );
+		excitonToIonRatio = excitonToIonPar0*powf(*meanField,-excitonToIonPar1) * ( 1 - exp(-excitonToIonPar2 * 11.5*mcEnergy*powf(54, -7./3.)) );
 		
 		probRecombination = ( (excitonToIonRatio+1) * photonYield )/(photonYield+chargeYield) - excitonToIonRatio;
 		
@@ -515,13 +515,7 @@ __global__ void gpu_full_observables_production_with_hist_spline(int *seed, int 
 		//return;
 		
 		
-		
-		
-		// Band cut
-		if (mcS2 > nr_band_cut[0] + nr_band_cut[1]*mcS1 + nr_band_cut[2]*mcS1*mcS1)
-		{	
-			return;
-		}
+
 
 		
 		
@@ -552,6 +546,15 @@ __global__ void gpu_full_observables_production_with_hist_spline(int *seed, int 
 			return;
 		}
 		
+		
+				
+		
+		// Band cut
+		if (mcS1 < 24 && (mcS2 > nr_band_cut[0] + nr_band_cut[1]*mcS1 + nr_band_cut[2]*mcS1*mcS1))
+		{	
+			return;
+		}
+		
 	
 		
 		// trig efficiency
@@ -561,7 +564,8 @@ __global__ void gpu_full_observables_production_with_hist_spline(int *seed, int 
 		}
 		
 		// peak finder efficiency
-		if (curand_uniform(&s) > (1 - exp(-(mcS1-*s1_eff_par0) / *s1_eff_par1)))
+		// if (curand_uniform(&s) > (1 - exp(-(mcS1-*s1_eff_par0) / *s1_eff_par1)))
+		if (curand_uniform(&s) > (exp(-*s1_eff_par0*exp(-mcS1 * *s1_eff_par1))))
 		{
 			return;
 		}
