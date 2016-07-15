@@ -547,14 +547,25 @@ __global__ void gpu_full_observables_production_with_hist_spline(int *seed, int 
 		}
 		
 		
+		// Old and cut
+		// if (mcS1 < 24 && (mcS2 > nr_band_cut[0] + nr_band_cut[1]*mcS1 + nr_band_cut[2]*mcS1*mcS1))
+		// {
+		// 	return;
+		// }
 				
 		
 		// Band cut
-		if (mcS1 < 24 && (mcS2 > nr_band_cut[0] + nr_band_cut[1]*mcS1 + nr_band_cut[2]*mcS1*mcS1))
+		if (log10f(mcS2/mcS1) > nr_band_cut[0]*exp(-mcS1/nr_band_cut[1]) + nr_band_cut[2])
 		{	
 			return;
 		}
 		
+		
+		// physical check the efficiency parameters
+		if (*s2_eff_par1 <= 0 || *s1_eff_par0 <= 0 || *s1_eff_par1 <= 0)
+		{	
+			return;
+		}
 	
 		
 		// trig efficiency

@@ -4,6 +4,7 @@ import sys, os, click, time
 from rootpy import stl
 from rootpy.io import File
 from rootpy.tree import Tree, TreeModel, TreeChain
+from rootpy.plotting import Graph, Hist
 import neriX_config, neriX_datasets, neriX_pmt_gain_corrections
 import threading
 import numpy as np
@@ -275,6 +276,35 @@ def profile_y_median(hist_to_profile, percent_from_median=34.1):
 
 
 	return (num_bins_x, bin_centers_x, aYValues, aXErrLow, aXErrHigh, aYErrLow, aYErrHigh)
+
+
+
+# based off of rootpy's implementation BUT includes
+# the value = 0 case
+def convert_hist_to_graph_with_poisson_errors(inputHist, scale=1.):
+	graph = root.TGraphAsymmErrors(inputHist.nbins(axis=0))
+	chisqr = root.TMath.ChisquareQuantile
+	npoints = 0
+	for bin in inputHist.bins(overflow=False):
+		entries = bin.effective_entries
+		if entries < 0:
+			continue
+		elif entries == 0:
+			ey_low = 0
+			ey_high = 1.13943 # -ln(1-0.68)
+		else:
+			ey_low = entries - 0.5 * chisqr(0.1586555, 2. * entries)
+			ey_high = 0.5 * chisqr(
+				1. - 0.1586555, 2. * (entries + 1)) - entries
+		ex = bin.x.width / 2.
+		graph.SetPoint(npoints, bin.x.center, bin.value/float(scale))
+		graph.SetPointEXlow(npoints, ex)
+		graph.SetPointEXhigh(npoints, ex)
+		graph.SetPointEYlow(npoints, ey_low/float(scale))
+		graph.SetPointEYhigh(npoints, ey_high/float(scale))
+		npoints += 1
+	graph.Set(npoints)
+	return graph
 
 
 
@@ -585,8 +615,8 @@ class neriX_analysis:
 			self.lT1[i].SetAlias('czS1sTotBottom','(1./(0.863098 + (-0.00977873)*Z))*S1sTotBottom')
 			
 			
-			self.lT1[i].SetAlias('s1asym', '(S1sTotBottom[0]-S1sTotTop[0])/S1sTot[0]')
-			self.lT1[i].SetAlias('s2asym', '(S2sTotBottom[0]-S2sTotTop[0])/S2sTot[0]')
+			self.lT1[i].SetAlias('s1asym', '(cpS1sTotBottom[0]-S1sTotTop[0])/(cpS1sTotBottom[0]+S1sTotTop[0])')
+			self.lT1[i].SetAlias('s2asym', '(cpS2sTotBottom[0]-S2sTotTop[0])/(cpS2sTotBottom[0]+S2sTotTop[0])')
 			
 			if self.runNumber == 15 or self.runNumber == 16:
 				# Z is taken from the GATE in runs 15 and 16
@@ -890,13 +920,13 @@ class neriX_analysis:
 	
 	
 	def add_xs2asym_cut(self):
-		Xs2asym = '( s2asym > -0.8*exp(-S2sTotBottom[0]/400.)-0.2 )'
+		Xs2asym = '( s2asym > -0.9*exp(-cpS2sTotBottom[0]/400.)-0.05 )'
 		self.Xrun += ' && ' + Xs2asym
 		
 
 
 	def add_xs1asym_cut(self):
-		Xs1asym = '( s1asym > -1.4*exp(-S1sTotBottom[0]/10.)+0.4 )'
+		Xs1asym = '( s1asym > -1.4*exp(-cpS1sTotBottom[0]/10.)+0.4 )'
 		self.Xrun += ' && ' + Xs1asym
 
 
