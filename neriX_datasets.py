@@ -1647,7 +1647,22 @@ for run in run_files:
 		
 		run_files[run]['nerix_160706_1117.root'] = (4.50, 2.356, -4)
 		
-		run_files[run]['nerix_160711_0911.root'] = (4.50, 0.345, -1)
+		run_files[run]['nerix_160711_0911.root'] = (4.50, 0.345, -10)
+		
+		run_files[run]['nerix_160715_.root'] = (4.50, 2.356, -4)
+		
+		run_files[run]['nerix_160718_1028.root'] = (4.50, 0.345, -10)
+		
+		run_files[run]['nerix_160718_1138.root'] = (4.50, 0.345, -1)
+		
+		
+		
+		
+		# Na22 trigger efficiency
+		
+		run_files[run]['nerix_160715_1527.root'] = (4.50, 0.345, -50)
+		run_files[run]['nerix_160716_1245.root'] = (4.50, 0.345, -50)
+		run_files[run]['nerix_160717_1438.root'] = (4.50, 0.345, -50)
 		
 		
 		

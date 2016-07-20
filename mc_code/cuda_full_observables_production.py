@@ -368,6 +368,9 @@ __global__ void gpu_full_observables_production_with_hist_spline(int *seed, int 
 	float chargeYield;
 	int indexOfUpperSplinePoint;
 	
+	float s1_eff_prob;
+	float s2_eff_prob;
+	
 	float probRecombination;
 	
 	if (iteration < *num_trials)
@@ -488,9 +491,17 @@ __global__ void gpu_full_observables_production_with_hist_spline(int *seed, int 
 		{	
 			return;
 		}
-		if (mcElectrons < 1 || *extractionEfficiency < 0 || *extractionEfficiency > 1) 
+		// if (mcElectrons < 1 || *extractionEfficiency < 0 || *extractionEfficiency > 1)
+		// {
+		//	   return;
+		// }
+		if (mcElectrons < 1 || *extractionEfficiency < 0)
 		{	
 			return;
+		}
+		if (*extractionEfficiency > 1)
+		{	
+			*extractionEfficiency = 1;
 		}
 		if (*gasGainWidth <= 0) 
 		{	
@@ -555,7 +566,7 @@ __global__ void gpu_full_observables_production_with_hist_spline(int *seed, int 
 				
 		
 		// Band cut
-		if (log10f(mcS2/mcS1) > nr_band_cut[0]*exp(-mcS1/nr_band_cut[1]) + nr_band_cut[2])
+		if ((log10f(mcS2/mcS1) < (nr_band_cut[0] + nr_band_cut[1]*mcS1)) || (log10f(mcS2/mcS1) > (nr_band_cut[2]*exp(-mcS1/nr_band_cut[3]) + nr_band_cut[4])))
 		{	
 			return;
 		}
@@ -569,21 +580,26 @@ __global__ void gpu_full_observables_production_with_hist_spline(int *seed, int 
 	
 		
 		// trig efficiency
-		if (curand_uniform(&s) > 1. / (1 + exp(-(mcS2-*s2_eff_par0) / *s2_eff_par1)))
+		s2_eff_prob = 1. / (1. + exp(-(mcS2-*s2_eff_par0) / *s2_eff_par1));
+		if (curand_uniform(&s) > s2_eff_prob)
 		{	
 			return;
 		}
 		
 		// peak finder efficiency
-		// if (curand_uniform(&s) > (1 - exp(-(mcS1-*s1_eff_par0) / *s1_eff_par1)))
-		if (curand_uniform(&s) > (exp(-*s1_eff_par0*exp(-mcS1 * *s1_eff_par1))))
+		s1_eff_prob = 1. / (1. + exp(-(mcS1-*s1_eff_par0) / *s1_eff_par1));
+		// if (curand_uniform(&s) > (1. - exp(-(mcS1-*s1_eff_par0) / *s1_eff_par1)))
+		// if (curand_uniform(&s) > (exp(-*s1_eff_par0*exp(-mcS1 * *s1_eff_par1))))
+		if (curand_uniform(&s) > s1_eff_prob)
 		{
 			return;
 		}
 		
 			
-		// hist_2d_array[0] = num_bins_s1;
-		// hist_2d_array[1] = num_bins_s2;
+		// hist_2d_array[0] = *s2_eff_par0;
+		// hist_2d_array[1] = *s2_eff_par1;
+		// hist_2d_array[2] = s2_eff_prob;
+		// hist_2d_array[3] = 100.;
 		// return;
 		
 		// find indices of s1 and s2 bins for 2d histogram
