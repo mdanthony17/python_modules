@@ -920,7 +920,7 @@ class neriX_analysis:
 	
 	
 	def add_xs2asym_cut(self):
-		Xs2asym = '( s2asym > -0.9*exp(-cpS2sTotBottom[0]/400.)-0.05 )'
+		Xs2asym = '( s2asym > -0.9*exp(-cpS2sTotBottom[0]/400.)-0.05 && s2asym < -0.5*exp(-cpS2sTotBottom[0]/400.)+0.4)'
 		self.Xrun += ' && ' + Xs2asym
 		
 
