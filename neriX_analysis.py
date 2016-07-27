@@ -616,6 +616,7 @@ class neriX_analysis:
 			
 			
 			self.lT1[i].SetAlias('s1asym', '(cpS1sTotBottom[0]-S1sTotTop[0])/(cpS1sTotBottom[0]+S1sTotTop[0])')
+			self.lT1[i].SetAlias('s1asym_any_peak', '(cpS1sTotBottom[]-S1sTotTop[])/(cpS1sTotBottom[]+S1sTotTop[])')
 			self.lT1[i].SetAlias('s2asym', '(cpS2sTotBottom[0]-S2sTotTop[0])/(cpS2sTotBottom[0]+S2sTotTop[0])')
 			
 			if self.runNumber == 15 or self.runNumber == 16:
@@ -925,8 +926,11 @@ class neriX_analysis:
 		
 
 
-	def add_xs1asym_cut(self):
-		Xs1asym = '( s1asym > -1.4*exp(-cpS1sTotBottom[0]/10.)+0.4 )'
+	def add_xs1asym_cut(self, any_peak=False):
+		if not any_peak:
+			Xs1asym = '( s1asym > -1.4*exp(-cpS1sTotBottom[0]/10.)+0.4 )'
+		else:
+			Xs1asym = '( s1asym_any_peak > -1.4*exp(-cpS1sTotBottom[]/10.)+0.4 )'
 		self.Xrun += ' && ' + Xs1asym
 
 

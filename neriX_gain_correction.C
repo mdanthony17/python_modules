@@ -38,8 +38,10 @@ Double_t GetGainCorrectionBottomPMT(int run, double unixtime)
 	}
 	else if (run == 16)
 	{
-		if ((unixtime > 1458225120.0) && (unixtime < 1463497680.0))
-			 return ((-0.00335168443265*unixtime + 5777477.66259)/1480000.0);
+		//if ((unixtime > 1458225120.0) && (unixtime < 1463497680.0))
+		//	 return ((-0.00335168443265*unixtime + 5777477.66259)/1480000.0);
+		if ((unixtime > 1458225120.0) && (unixtime < 1468324260.0))
+			 return ((0.0031047854657*unixtime + -3653783.64138)/1480000.0);
 		else
 			return 1.0;
 	}

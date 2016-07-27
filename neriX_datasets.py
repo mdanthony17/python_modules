@@ -1655,6 +1655,7 @@ for run in run_files:
 		
 		run_files[run]['nerix_160718_1138.root'] = (4.50, 0.345, -1)
 		
+		run_files[run]['nerix_160725_1039.root'] = (4.50, 0.345, -10)
 		
 		
 		
@@ -1760,7 +1761,7 @@ for run in run_files:
 		run_files[run]['nerix_160513_0712.root'] = (4.50, 0.345, {3500:[0,1], 4500:[2,3]})
 		run_files[run]['nerix_160513_1557.root'] = (4.50, 0.345, {3500:[0,1], 4500:[2,3]})
 		run_files[run]['nerix_160515_0818.root'] = (4.50, 0.345, {3500:[0,1], 4500:[2,3]})
-
+		
 
 		# 7 and 10 keV
 		# 500 V/cm
