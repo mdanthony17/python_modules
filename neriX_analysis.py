@@ -12,6 +12,7 @@ from rootpy.io.pickler import dump, load
 from contextlib import contextmanager
 import rootpy.compiled as C
 import root_numpy
+from rootpy import asrootpy
 
 C.register_file('neriX_gain_correction.C', ['GetGainCorrectionBottomPMT', 'GetGainCorrectionErrorBottomPMT'])
 
@@ -283,6 +284,7 @@ def profile_y_median(hist_to_profile, percent_from_median=34.1):
 # the value = 0 case
 def convert_hist_to_graph_with_poisson_errors(inputHist, scale=1.):
 	graph = root.TGraphAsymmErrors(inputHist.nbins(axis=0))
+	
 	chisqr = root.TMath.ChisquareQuantile
 	npoints = 0
 	for bin in inputHist.bins(overflow=False):

@@ -587,7 +587,8 @@ __global__ void gpu_full_observables_production_with_hist_spline(int *seed, int 
 	
 		
 		// trig efficiency
-		s2_eff_prob = 1. / (1. + exp(-(mcS2-*s2_eff_par0) / *s2_eff_par1));
+		// s2_eff_prob = 1. / (1. + exp(-(mcS2-*s2_eff_par0) / *s2_eff_par1));
+		s2_eff_prob = 1. - exp(-(mcS2-*s2_eff_par0) / *s2_eff_par1);
 		if (curand_uniform(&s) > s2_eff_prob)
 		{	
 			return;
