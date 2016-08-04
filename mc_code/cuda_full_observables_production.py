@@ -645,8 +645,9 @@ __global__ void gpu_full_observables_production_with_log_hist_spline(int *seed, 
 	//const int iteration = blockIdx.x * blockDim.x + threadIdx.x;
 	const int iteration = blockIdx.x * blockDim.x * blockDim.y + threadIdx.y * blockDim.x + threadIdx.x;
 
-	//curand_init(0, 0, 0, &s); // for debugging
-	curand_init(*seed * iteration, 0, 0, &s);
+	//curand_init(iteration, 0, 0, &s); // for debugging
+	//curand_init(*seed * iteration, 0, 0, &s);
+	curand_init((*seed << 20) + iteration, 0, 0, &s);
 	
 	float mcEnergy;
 	int mcQuanta;
@@ -882,12 +883,6 @@ __global__ void gpu_full_observables_production_with_log_hist_spline(int *seed, 
 			return;
 		}
 		
-		
-		// physical check the efficiency parameters
-		if (*s2_eff_par1 <= 0 || *s1_eff_par0 <= 0 || *s1_eff_par1 <= 0)
-		{	
-			return;
-		}
 	
 		
 		// trig efficiency

@@ -1659,13 +1659,45 @@ for run in run_files:
 		
 		run_files[run]['nerix_160726_1434.root'] = (4.50, 0.345, -10)
 		
+		run_files[run]['nerix_160801_1145.root'] = (4.50, 0.345, -1)
+		run_files[run]['nerix_160801_1300.root'] = (4.50, 0.700, -1)
+		run_files[run]['nerix_160801_1328.root'] = (4.50, 1.054, -1)
+		run_files[run]['nerix_160801_1356.root'] = (4.50, 1.500, -1)
+		run_files[run]['nerix_160801_1424.root'] = (4.50, 2.356, -1)
+		
+		run_files[run]['nerix_160802_0944.root'] = (4.50, 0.345, -2)
+		run_files[run]['nerix_160802_1015.root'] = (4.50, 0.700, -2)
+		run_files[run]['nerix_160802_1048.root'] = (4.50, 1.054, -2)
+		run_files[run]['nerix_160802_1135.root'] = (4.50, 1.500, -2)
+		run_files[run]['nerix_160802_1206.root'] = (4.50, 2.356, -2)
+		
+		run_files[run]['nerix_160803_1350.root'] = (4.50, 0.345, -2)
+		
+		
+		
+		
+		
 		
 		# Na22 trigger efficiency
 		
+		
+		
+		run_files[run]['nerix_160708_1521.root'] = (4.50, 0.345, -50)
+		run_files[run]['nerix_160709_1859.root'] = (4.50, 0.345, -50)
+		run_files[run]['nerix_160710_1735.root'] = (4.50, 0.345, -50)
+		run_files[run]['nerix_160712_1512.root'] = (4.50, 0.345, -50)
+		run_files[run]['nerix_160713_1705.root'] = (4.50, 0.345, -50)
+		
+		run_files[run]['nerix_160714_1127.root'] = (4.50, 0.345, -50)
 		run_files[run]['nerix_160715_1527.root'] = (4.50, 0.345, -50)
 		run_files[run]['nerix_160716_1245.root'] = (4.50, 0.345, -50)
 		run_files[run]['nerix_160717_1438.root'] = (4.50, 0.345, -50)
 		run_files[run]['nerix_160722_1759.root'] = (4.50, 0.345, -50)
+		
+		run_files[run]['nerix_160726_1635.root'] = (4.50, 0.345, -50)
+		run_files[run]['nerix_160728_1344.root'] = (4.50, 0.345, -50)
+		run_files[run]['nerix_160802_1530.root'] = (4.50, 0.345, -50)
+		#run_files[run]['nerix_160803_0913.root'] = (4.50, 0.345, -50)
 		
 		
 		

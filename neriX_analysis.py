@@ -217,6 +217,9 @@ def convert_name_to_unix_time(fileName):
 	elif fileName[0:8] == 'ct_nerix':
 		sTimeTaken = '20' + fileName[9:20] + '00'
 		return int(time.mktime(time.strptime(sTimeTaken, '%Y%m%d_%H%M%S')))
+	elif fileName[0:7] == 'r_nerix':
+		sTimeTaken = '20' + fileName[8:19] + '00'
+		return int(time.mktime(time.strptime(sTimeTaken, '%Y%m%d_%H%M%S')))
 	else:
 		print 'Only know how to handle nerix and ct_nerix files currently'
 		print 'Please add to convert_name_to_unix_time function in order to handle the new case'
@@ -595,6 +598,7 @@ class neriX_analysis:
 		
 			#define helpful aliases
 			self.lT1[i].SetAlias('dt','(S2sPeak[0]-S1sPeak[0])/100.')
+			self.lT1[i].SetAlias('dt_any_peak','(S2sPeak[0]-S1sPeak[])/100.')
 			self.lT1[i].SetAlias('s1_tot_bot_minus_noise_m','(S1sTotBottom[0] - S1sNoiseMedian[0][16])')
 			self.lT1[i].SetAlias('s1_tot_bot_minus_noise_t','(S1sTotBottom[0] - S1sNoiseTrapezoid[0][16])')
 			numEJs = 4
@@ -627,16 +631,22 @@ class neriX_analysis:
 			
 				if self.cathodeSetting == 0.345:
 					self.lT1[i].SetAlias('Z','-1.56*(dt-%f)' % self.dt_offset_gate)
+					self.lT1[i].SetAlias('Z_any_peak','-1.56*(dt_any_peak-%f)' % self.dt_offset_gate)
 				elif self.cathodeSetting == 0.700:
 					self.lT1[i].SetAlias('Z','-1.68*(dt-%f)' % self.dt_offset_gate)
+					self.lT1[i].SetAlias('Z_any_peak','-1.68*(dt_any_peak-%f)' % self.dt_offset_gate)
 				elif self.cathodeSetting == 1.054:
 					self.lT1[i].SetAlias('Z','-1.77*(dt-%f)' % self.dt_offset_gate)
+					self.lT1[i].SetAlias('Z_any_peak','-1.77*(dt_any_peak-%f)' % self.dt_offset_gate)
 				elif self.cathodeSetting == 1.500:
 					self.lT1[i].SetAlias('Z','-1.87*(dt-%f)' % self.dt_offset_gate)
+					self.lT1[i].SetAlias('Z_any_peak','-1.87*(dt_any_peak-%f)' % self.dt_offset_gate)
 				elif self.cathodeSetting == 2.356:
 					self.lT1[i].SetAlias('Z','-2.00*(dt-%f)' % self.dt_offset_gate)
+					self.lT1[i].SetAlias('Z_any_peak','-2.00*(dt_any_peak-%f)' % self.dt_offset_gate)
 				elif self.cathodeSetting == 5.500:
 					self.lT1[i].SetAlias('Z','-2.233*(dt-%f)' % self.dt_offset_gate)
+					self.lT1[i].SetAlias('Z_any_peak','-2.233*(dt_any_peak-%f)' % self.dt_offset_gate)
 				else:
 					print 'Incorrect field entered - cannot correct Z'
 			elif self.runNumber == 10 or self.runNumber == 11:
@@ -752,7 +762,7 @@ class neriX_analysis:
 
 
 
-	def add_z_cut(self, lowZ = -22., highZ = -4.):
+	def add_z_cut(self, lowZ = -22., highZ = -4., any_peak=False):
 		if self.runNumber == 10 or self.runNumber == 11:
 			if self.cathodeSetting == 0.345:
 				Xz = '((Z > -25.1) && (Z < -3.75))'
@@ -763,7 +773,10 @@ class neriX_analysis:
 			elif self.cathodeSetting == 5.500:
 				Xz = '((Z > -26.3) && (Z < -4.9))'
 		if self.runNumber == 15 or self.runNumber == 16:
-			Xz = '((Z > -24.3) && (Z < -1.0))'
+			if any_peak:
+				Xz = '((Z_any_peak > -24.3) && (Z_any_peak < -1.0))'
+			else:
+				Xz = '((Z > -24.3) && (Z < -1.0))'
 		else:
 			Xz = '((Z > ' + str(lowZ) + ') && (Z < '+ str(highZ) + '))'
 		self.Xrun = self.Xrun + ' && ' + Xz
