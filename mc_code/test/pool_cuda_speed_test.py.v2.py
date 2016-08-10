@@ -1,39 +1,89 @@
-from rootpy.plotting import Hist2D, Hist, Legend, Canvas
-
-
-
-# example using pagelocked memory (pinned)
-
-"""
-##CODE START######################
+from pycuda.compiler import SourceModule
 import pycuda.driver as drv
+import pycuda.tools
+import pycuda.gpuarray
+import numpy as np
 
 drv.init()
-dev = drv.Device(0)
-ctx = dev.make_context(drv.ctx_flags.SCHED_AUTO | drv.ctx_flags.MAP_HOST)
 
-k = pycuda.compiler.SourceModule(\"""
-__global__ void krnl(float* a) {
-  int i = blockIdx.x * blockDim.x + threadIdx.x;
-  a[i] = i;
-}
-\""").get_function("krnl")
+import threading, Queue, time
 
-a = drv.pagelocked_empty((10, 10), numpy.float32, mem_flags=drv.host_alloc_flags.DEVICEMAP)
+class gpu_thread(threading.Thread):
+	def __init__(self, gpu_number):
+		threading.Thread.__init__(self)
 
-aa = numpy.intp(a.base.get_device_pointer())
-k(aa, grid=(100,1), block=(1,1,1))
+		self.gpu_number = gpu_number
 
-ctx.pop()
+	def set_args_list(self, args_list):
+		# will be passed list of args list
+		# for multiple iterations
+		self.__args_list = args_list
 
 
-##CODE END######################
-"""
+	def set_kwargs(self, kwargs):
+		self.__kwargs = kwargs
+
+
+	def set_target(self, target_func):
+		self.__target = target_func
+
+
+
+	def run(self):
+		self.dev = drv.Device(self.gpu_number)
+		self.ctx = self.dev.make_context(drv.ctx_flags.SCHED_AUTO | drv.ctx_flags.MAP_HOST)
+		observables_func = pycuda.compiler.SourceModule(cuda_full_observables_production_code, no_extern_c=True).get_function('gpu_full_observables_production')
+		print len(self.__args_list)
+		for args in self.__args_list:
+			self.__target(observables_func, *args, **self.__kwargs)
+			#print np.asarray(args[2])
+		self.ctx.pop()
+		del self.dev
+		del self.ctx
 
 
 
 
 
+class gpu_pool(object):
+	def __init__(self, num_gpus):
+		self.num_gpus = num_gpus
+		
+		self.l_threads = [gpu_thread(i) for i in xrange(self.num_gpus)]
+
+		self.kwargs = {}
+
+	def set_kwargs(self, kwargs={}):
+		self.kwargs = kwargs
+
+
+	def map(self, function_to_call, arguments_for_func_call):
+		
+		start_time_map = time.time()
+		l_thread_tasks = [[] for i in xrange(len(arguments_for_func_call))]
+		for i in xrange(len(arguments_for_func_call)):
+			l_thread_tasks[i%self.num_gpus].append(arguments_for_func_call[i])
+
+		num_gpus_needed = self.num_gpus
+		if self.num_gpus > len(arguments_for_func_call):
+			num_gpus_needed = len(arguments_for_func_call)
+
+		# set args lists for each thread
+		for i in xrange(num_gpus_needed):
+			self.l_threads[i].set_args_list(l_thread_tasks[i])
+			self.l_threads[i].set_kwargs(self.kwargs)
+			self.l_threads[i].set_target(function_to_call)
+		print 'map initialization time: %.2e' % (time.time() - start_time_map)
+		
+		for i in xrange(num_gpus_needed):
+			self.l_threads[i].start()
+
+		for i in xrange(num_gpus_needed):
+			self.l_threads[i].join()
+
+
+
+g_pool = gpu_pool(1)
 
 cuda_full_observables_production_code ="""
 #include <curand_kernel.h>
@@ -238,76 +288,16 @@ __global__ void gpu_full_observables_production(int *seed, int *num_trials, floa
 """
 
 
+grid_dim = 2048
+block_dim = 256
+num_entries = grid_dim*block_dim
+num_iterations = 100
 
-
-import sys, os, random, time
-import numpy as np
-
-import cuda_full_observables_production
-from pycuda.compiler import SourceModule
-import pycuda.driver as drv
-import pycuda.tools
-import pycuda.gpuarray
-
-import rootpy.compiled as C
-C.register_file('c_full_observables_production_no_eff.C', ['full_matching_loop'])
-c_full_matching_loop = C.full_matching_loop
-
-
-drv.init()
-dev = drv.Device(0)
-ctx = dev.make_context(drv.ctx_flags.SCHED_AUTO | drv.ctx_flags.MAP_HOST)
-
-grid_d1 = 8192
-block_d1 = 512
-num_entries = int(grid_d1*block_d1)
-num_iterations = 10
-
-"""
-practie_kernel = pycuda.compiler.SourceModule(\"""
-__global__ void krnl(float *a) {
-  int i = blockIdx.x * blockDim.x + threadIdx.x;
-  a[i] = a[i]+1;
-}
-\""").get_function("krnl")
-
-a = drv.pagelocked_zeros((num_entries, 1), np.float32, mem_flags=drv.host_alloc_flags.DEVICEMAP)
-
-aa = np.intp(a.base.get_device_pointer())
-
-# line to run gpu code
-startTime = time.time()
-practie_kernel(aa, grid=(num_entries,1), block=(1,1,1))
-print 'Initial time: %f\n' % (time.time() - startTime)
-
-startTime = time.time()
-practie_kernel(aa, grid=(num_entries,1), block=(1,1,1))
-print 'Second time: %f\n' % (time.time() - startTime)
-
-#print list(a)
-"""
-
-#a = drv.pagelocked_zeros((num_entries, 1), np.float32, mem_flags=drv.host_alloc_flags.DEVICEMAP)
-#a = np.zeros(num_entries, dtype=np.float32)
-#aEnergy = drv.register_host_memory(a)
-#aEnergy = drv.mem_alloc(a.nbytes)
-#a_pin = drv.pagelocked_empty(shape=num_entries, dtype=np.float32)
-#a_pin.fill(10.)
-
-
-observables_func = pycuda.compiler.SourceModule(cuda_full_observables_production_code, no_extern_c=True).get_function('gpu_full_observables_production')
-
-
-
-# set variables for full matching
 
 aEnergy = np.full(num_entries, 10., dtype=np.float32)
-aEnergy = pycuda.gpuarray.to_gpu(aEnergy)
 
 aS1 = np.full(num_entries, -1, dtype=np.float32)
-aS1_gpu = pycuda.gpuarray.to_gpu(aS1)
 aS2 = np.full(num_entries, -1, dtype=np.float32)
-aS2_gpu = pycuda.gpuarray.to_gpu(aS2)
 
 seed = np.asarray(int(time.time()*1000), dtype=np.int32)
 num_trials = np.asarray(num_entries, dtype=np.int32)
@@ -321,106 +311,22 @@ gasGainWidth = np.asarray(5., dtype=np.float32)
 speRes = np.asarray(.7, dtype=np.float32)
 intrinsicResS1 = np.asarray(.3, dtype=np.float32)
 intrinsicResS2 = np.asarray(.1, dtype=np.float32)
-tacEff = np.asarray([1e6], dtype=np.float32)
-pfEff = np.asarray([-1e6, 1], dtype=np.float32)
-trigEff = np.asarray([-1e6, 1], dtype=np.float32)
 
 
-startTime = time.time()
-for i in xrange(num_iterations):
 
-	tArgs = [drv.In(seed), drv.In(num_trials), aS1_gpu.gpudata, aS2_gpu.gpudata, aEnergy.gpudata, drv.In(photonYield), drv.In(chargeYield), drv.In(excitonToIonRatio), drv.In(g1Value), drv.In(extractionEfficiency), drv.In(gasGainValue), drv.In(gasGainWidth), drv.In(speRes), drv.In(intrinsicResS1), drv.In(intrinsicResS2)]
+def f_gpu_observables_func(func, seed, num_trials, aS1, aS2, aEnergy, photonYield, chargeYield, excitonToIonRatio, g1Value, extractionEfficiency, gasGainValue, gasGainWidth, speRes, intrinsicResS1, intrinsicResS2):
 
-	observables_func(*tArgs, grid=(grid_d1,1), block=(block_d1,1,1))
-	aS1 = aS1_gpu.get()
-	aS2 = aS2_gpu.get()
-	#print aS1[0], aS2[0]
-	#print aS1[1], aS2[1]
+	tArgs = [drv.In(seed), drv.In(num_trials), drv.InOut(aS1), drv.InOut(aS2), drv.In(aEnergy), drv.In(photonYield), drv.In(chargeYield), drv.In(excitonToIonRatio), drv.In(g1Value), drv.In(extractionEfficiency), drv.In(gasGainValue), drv.In(gasGainWidth), drv.In(speRes), drv.In(intrinsicResS1), drv.In(intrinsicResS2)]
 
-print 'Time for %d iterations on GPU: %f\n' % (num_iterations, time.time() - startTime)
+	func(*tArgs, grid=(grid_dim, 1), block=(block_dim, 1, 1))
 
-ctx.pop()
-
-aS1_gpu = aS1
-aS2_gpu = aS2
-
-s_test_function = """
-#include <math.h>
-
-void test_function(int *numTrials, float *aValues)
-{
-	for (int i=0; i < *numTrials; i++)
-	{
-		aValues[i] = aValues[i] + 1;
-	}
-}
+start_time = time.time()
+g_pool.map(f_gpu_observables_func, [[seed, num_trials, aS1, aS2, aEnergy, photonYield, chargeYield, excitonToIonRatio, g1Value, extractionEfficiency, gasGainValue, gasGainWidth, speRes, intrinsicResS1, intrinsicResS2] for i in xrange(num_iterations)])
+print '\nTime for %d iterations: %.2e s' % (num_iterations, time.time() - start_time)
 
 
-"""
-
-"""
-C.register_code(s_test_function, ['test_function'])
-c_test_function = C.test_function
-
-aValues = np.zeros(num_entries, dtype=np.float32)
-
-num_trials = np.asarray(num_entries, dtype=np.int32)
-
-startTime = time.time()
-c_test_function(num_trials, aValues)
-print 'C loop time: %f\n' % (time.time() - startTime)
-"""
-
-aEnergy = np.full(num_entries, 10, dtype=np.float32)
-aS1 = np.full(num_entries, -1, dtype=np.float32)
-aS2 = np.full(num_entries, -1, dtype=np.float32)
-
-startTime = time.time()
-for i in xrange(num_iterations):
-	c_full_matching_loop(seed, num_trials, aS1, aS2, aEnergy, photonYield, chargeYield, excitonToIonRatio, g1Value, extractionEfficiency, gasGainValue, gasGainWidth, speRes, intrinsicResS1, intrinsicResS2, tacEff, trigEff, pfEff)
-print 'Time for %d iterations on CPU: %f\n' % (num_iterations, time.time() - startTime)
-
-aS1_cpu = aS1
-aS2_cpu = aS2
-
-print aS1_cpu
+#g_pool.map(f_gpu_practice, [[a_gpu.gpudata], [b_gpu.gpudata], [c_gpu.gpudata], [d_gpu.gpudata]])
 
 
-# -------------------------------------------------
-# -------------------------------------------------
-# Fill histograms as a sanity check since
-# spectra should look identical
-# -------------------------------------------------
-# -------------------------------------------------
-
-"""
-lb_s1 = 0
-ub_s1 = 40
-num_bins_s1 = 40
-
-lb_s2 = 0
-ub_s2 = 4000
-num_bins_s2 = 40
-
-h_gpu = Hist2D(num_bins_s1, lb_s1, ub_s1, num_bins_s2, lb_s2, ub_s2, name='h_gpu')
-for i in xrange(len(aS1_gpu)):
-	h_gpu.Fill(aS1_gpu[i], aS2_gpu[i])
-
-h_cpu = Hist2D(num_bins_s1, lb_s1, ub_s1, num_bins_s2, lb_s2, ub_s2, name='h_cpu')
-for i in xrange(len(aS1_cpu)):
-	h_cpu.Fill(aS1_cpu[i], aS2_cpu[i])
-
-
-c1 = Canvas(1400, 700)
-c1.Divide(2)
-c1.cd(1)
-h_gpu.Draw('colz')
-c1.cd(2)
-h_cpu.Draw('colz')
-
-c1.Update()
-
-raw_input('Press enter to continue...')
-
-"""
-
+#g_pool.map(f_hello, [[1], [2], [3], [4], [5], [6]])
+#g_pool.map(f_hello, [[11], [12], [13], [14], [15], [16]])

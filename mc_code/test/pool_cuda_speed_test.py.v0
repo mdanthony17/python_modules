@@ -1,0 +1,145 @@
+from pycuda.compiler import SourceModule
+import pycuda.driver as drv
+import pycuda.tools
+import pycuda.gpuarray
+import numpy as np
+
+drv.init()
+
+import threading, Queue, time
+
+class gpu_thread(threading.Thread):
+	def __init__(self, gpu_number):
+		threading.Thread.__init__(self)
+
+		print '\n%d gpus found\n' % (drv.Device.count())
+
+		start_time = time.time()
+		self.dev = drv.Device(gpu_number)
+		self.ctx = self.dev.make_context(drv.ctx_flags.SCHED_AUTO | drv.ctx_flags.MAP_HOST)
+		print 'Time to create context = %.3e' % (time.time() - start_time)
+
+
+	def set_args_list(self, args_list):
+		# will be passed list of args list
+		# for multiple iterations
+		self.__args_list = args_list
+
+
+	def set_kwargs(self, kwargs):
+		self.__kwargs = kwargs
+
+
+	def set_target(self, target_func):
+		self.__target = target_func
+
+
+	"""
+	def run(self):
+		print 'hello %d' % (self.num_to_pass)
+		time.sleep(1)
+	"""
+
+
+	def run(self):
+		for args in self.__args_list:
+			self.__target(*args, **self.__kwargs)
+			print np.asarray(args[0])
+
+	def __del__(self):
+		#threading.Thread.__del__(self)
+
+		self.ctx.pop()
+		del self.dev
+		del self.ctx
+
+
+
+class gpu_pool(object):
+	def __init__(self, num_gpus):
+		self.num_gpus = num_gpus
+		
+		self.l_threads = [gpu_thread(i) for i in xrange(self.num_gpus)]
+
+		self.kwargs = {}
+
+	def set_kwargs(self, kwargs={}):
+		self.kwargs = kwargs
+
+
+	def map(self, function_to_call, arguments_for_func_call):
+				
+		l_thread_tasks = [[] for i in xrange(len(arguments_for_func_call))]
+		for i in xrange(len(arguments_for_func_call)):
+			l_thread_tasks[i%self.num_gpus].append(arguments_for_func_call[i])
+
+		num_gpus_needed = self.num_gpus
+		if self.num_gpus > len(arguments_for_func_call):
+			num_gpus_needed = len(arguments_for_func_call)
+
+		# set args lists for each thread
+		for i in xrange(num_gpus_needed):
+			self.l_threads[i].set_args_list(l_thread_tasks[i])
+			self.l_threads[i].set_kwargs(self.kwargs)
+			self.l_threads[i].set_target(function_to_call)
+		
+		for i in xrange(num_gpus_needed):
+			self.l_threads[i].run()
+
+"""
+def hello_world(number):
+	print 'hello world %d' % number
+	return number
+
+test = gpu_thread(0)
+test.set_target(hello_world)
+test.set_args(2)
+r_value = test.run()
+"""
+
+			
+"""
+for i in xrange(drv.Device.count()):
+	t = gpu_thread(i)
+	t.set_args(i)
+	t.start()
+"""
+
+
+def f_hello(a):
+	print a
+	time.sleep(5)
+
+
+g_pool = gpu_pool(2)
+
+practice_kernel = pycuda.compiler.SourceModule("""
+__global__ void krnl(float *a) {
+  int i = blockIdx.x * blockDim.x + threadIdx.x;
+  a[i] = a[i]+1;
+}
+""").get_function("krnl")
+
+test_len = 512
+
+a = np.full(test_len, 1, dtype=np.float32)
+#a_gpu = pycuda.gpuarray.to_gpu(a)
+b = np.full(test_len, 2, dtype=np.float32)
+"""
+b_gpu = pycuda.gpuarray.to_gpu(b)
+c = np.full(test_len, 3, dtype=np.float32)
+c_gpu = pycuda.gpuarray.to_gpu(c)
+d = np.full(test_len, 4, dtype=np.float32)
+d_gpu = pycuda.gpuarray.to_gpu(d)
+"""
+
+
+def f_gpu_practice(a_in):
+	practice_kernel(drv.InOut(a_in), grid=(512, 1), block=(1, 1, 1))
+
+g_pool.map(f_gpu_practice, [[a]])
+#g_pool.map(f_gpu_practice, [[a_gpu.gpudata], [b_gpu.gpudata], [c_gpu.gpudata], [d_gpu.gpudata]])
+
+
+#g_pool.map(f_hello, [[1], [2], [3], [4], [5], [6]])
+#g_pool.map(f_hello, [[11], [12], [13], [14], [15], [16]])
