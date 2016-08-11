@@ -12,7 +12,9 @@ float log_likelihood_matching_uncertainty(float data, float scale, int num_mc_ev
 	data = (int)round(data);
 	float ln_likelihood = 0.;
 
-	ln_likelihood = -(data+1)*log(scale) - log(2) - lgamma(data+1) + log(pow((-1),data)-1+ ( 1 + pow(-1, 1+data) + pow(pow(scale-1,2)/pow(scale,2),0.5) + pow(-1, data)*pow(pow(scale-1,2)/pow(scale,2),0.5) )*scale ) + num_mc_events*(1-2*scale)/(2*pow(scale,2)) + (data+1)/2.*log(num_mc_events) + (data-1)/2.*log(num_mc_events*pow((1-scale),2)/pow(scale,2));
+	//ln_likelihood = -(data+1)*log(scale) - log(2) - lgamma(data+1) + log(pow((-1),data)-1+ ( 1 + pow(-1, 1+data) + pow(pow(scale-1,2)/pow(scale,2),0.5) + pow(-1, data)*pow(pow(scale-1,2)/pow(scale,2),0.5) )*scale ) + num_mc_events*(1-2*scale)/(2*pow(scale,2)) + (data+1)/2.*log(num_mc_events) + (data-1)/2.*log(num_mc_events*pow((1-scale),2)/pow(scale,2));
+	
+	ln_likelihood = (1+num_mc_events)*log(scale) + (-1-data-num_mc_events)*log(1+scale) + lgamma(1+data+num_mc_events) - (data*log(data) - data) - (num_mc_events*log(num_mc_events) - num_mc_events);
 	
 	return ln_likelihood;
 
@@ -21,8 +23,12 @@ float log_likelihood_matching_uncertainty(float data, float scale, int num_mc_ev
 
 
 
-float smart_log_likelihood(float *a_flat_data, float *a_flat_mc, int num_bins, int num_mc_events, float scale_normalized_to_mc_events, float confidence_interval)
+float smart_log_likelihood(float *a_flat_data, float *a_flat_mc, int num_bins, int num_mc_events, float scale_const, int num_data_pts, float confidence_interval)
 {
+	// a_flat_mc[i] = mc_events_in_bin[i]*scale_const*num_data_pts/num_mc_events
+	// a_flat_mc[i] = mc_events_in_bin[i] / scale
+	float scale = num_mc_events / (float(num_data_pts)*scale_const);
+
 	float total_log_likelihood = 0.;
 	float binom_prob = 1. - pow((1.-confidence_interval),(1./num_mc_events));
 	//printf("Beginning: %f\n", total_log_likelihood);
@@ -47,7 +53,7 @@ float smart_log_likelihood(float *a_flat_data, float *a_flat_mc, int num_bins, i
 		{
 			
 			//total_log_likelihood += a_flat_data[bin_number]*log(a_flat_mc[bin_number]) - a_flat_mc[bin_number] - lgamma(a_flat_data[bin_number]+1.0);
-			total_log_likelihood += log_likelihood_matching_uncertainty(a_flat_data[bin_number], num_mc_events/scale_normalized_to_mc_events, a_flat_mc[bin_number]*num_mc_events/scale_normalized_to_mc_events);
+			total_log_likelihood += log_likelihood_matching_uncertainty(a_flat_data[bin_number], scale, a_flat_mc[bin_number]*scale);
 			//printf("\n\ndata:%f\nmc:%f\nscale:%f\nscaled mc:%f\n", a_flat_data[bin_number], a_flat_mc[bin_number]*num_mc_events/scale_normalized_to_mc_events, num_mc_events/scale_normalized_to_mc_events, a_flat_mc[bin_number]);
 			//printf("MC and data (normal likelihood): %f\n", a_flat_data[bin_number]*log(a_flat_mc[bin_number]) - a_flat_mc[bin_number] - lgamma(a_flat_data[bin_number]+1.0));
 			//printf("MC and data (matching uncertainty): %f\n", log_likelihood_matching_uncertainty(a_flat_data[bin_number], num_mc_events/scale_normalized_to_mc_events, a_flat_mc[bin_number]*num_mc_events/scale_normalized_to_mc_events));
