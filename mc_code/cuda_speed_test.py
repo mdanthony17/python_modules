@@ -258,10 +258,10 @@ drv.init()
 dev = drv.Device(0)
 ctx = dev.make_context(drv.ctx_flags.SCHED_AUTO | drv.ctx_flags.MAP_HOST)
 
-grid_d1 = 8192
+grid_d1 = 8192/2
 block_d1 = 512
 num_entries = int(grid_d1*block_d1)
-num_iterations = 10
+num_iterations = 100
 
 """
 practie_kernel = pycuda.compiler.SourceModule(\"""
@@ -304,10 +304,7 @@ observables_func = pycuda.compiler.SourceModule(cuda_full_observables_production
 aEnergy = np.full(num_entries, 10., dtype=np.float32)
 aEnergy = pycuda.gpuarray.to_gpu(aEnergy)
 
-aS1 = np.full(num_entries, -1, dtype=np.float32)
-aS1_gpu = pycuda.gpuarray.to_gpu(aS1)
-aS2 = np.full(num_entries, -1, dtype=np.float32)
-aS2_gpu = pycuda.gpuarray.to_gpu(aS2)
+
 
 seed = np.asarray(int(time.time()*1000), dtype=np.int32)
 num_trials = np.asarray(num_entries, dtype=np.int32)
@@ -328,6 +325,12 @@ trigEff = np.asarray([-1e6, 1], dtype=np.float32)
 
 startTime = time.time()
 for i in xrange(num_iterations):
+
+	aS1 = np.full(num_entries, -1, dtype=np.float32)
+	aS1_gpu = pycuda.gpuarray.to_gpu(aS1)
+	aS2 = np.full(num_entries, -1, dtype=np.float32)
+	aS2_gpu = pycuda.gpuarray.to_gpu(aS2)
+
 
 	tArgs = [drv.In(seed), drv.In(num_trials), aS1_gpu.gpudata, aS2_gpu.gpudata, aEnergy.gpudata, drv.In(photonYield), drv.In(chargeYield), drv.In(excitonToIonRatio), drv.In(g1Value), drv.In(extractionEfficiency), drv.In(gasGainValue), drv.In(gasGainWidth), drv.In(speRes), drv.In(intrinsicResS1), drv.In(intrinsicResS2)]
 

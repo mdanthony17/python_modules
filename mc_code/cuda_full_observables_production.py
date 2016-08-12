@@ -37,14 +37,143 @@ cuda_full_observables_production_code ="""
 
 extern "C" {
 
-__device__ int gpu_binomial(curandState_t *rand_state, int num_successes, float prob_success)
+__device__ int gpu_binomial(curandState_t *rand_state, int num_trials, float prob_success)
 {
+	/*
 	int x = 0;
-	for(int i = 0; i < num_successes; i++) {
+	for(int i = 0; i < num_trials; i++) {
     if(curand_uniform(rand_state) < prob_success)
 		x += 1;
 	}
 	return x;
+	*/
+	
+	
+	// Rejection Method (from 7.3 of numerical recipes)
+	
+	float pi = 3.1415926535;
+	int j;
+	int nold = -1;
+	float am, em, g, angle, p, bnl, sq, t, y;
+	float pold = -1.;
+	float pc, plog, pclog, en, oldg;
+	
+	
+	p = (prob_success < 0.5 ? prob_success : 1.0 - prob_success);
+	
+	am = num_trials*p;
+	if (num_trials < 25)
+	{
+		bnl = 0;
+		for (j=0; j < num_trials; j++)
+		{
+			if (curand_uniform(rand_state) < p) bnl += 1;
+		}
+	}
+	else if (am < 1.0)
+	{
+		g = expf(-am);
+		t = 1.;
+		for (j=0; j < num_trials; j++)
+		{
+			t *= curand_uniform(rand_state);
+			if (t < g) break;
+		}
+		bnl = (j <= num_trials ? j : num_trials);
+	}
+	else
+	{
+		if (num_trials != nold)
+		{
+			en = num_trials;
+			oldg = lgammaf(en+1.);
+			nold = num_trials;
+		}
+		if (p != pold)
+		{
+			pc = 1. - p;
+			plog = logf(p);
+			pclog = logf(pc);
+			pold = p;
+		}
+		sq = powf(2.*am*pc, 0.5);
+		do
+		{
+			do
+			{
+				angle = pi*curand_uniform(rand_state);
+				y = tanf(angle);
+				em = sq*y + am;
+			} while (em < 0. || em >= (en+1.));
+			em = floor(em);
+			t = 1.2*sq*(1. + y*y)*expf(oldg - lgammaf(em+1.) - lgammaf(en-em+1.) + em*plog + (en-em)*pclog);
+		} while (curand_uniform(rand_state) > t);
+		bnl = em;
+	}
+	if (prob_success != p) bnl = num_trials - bnl;
+	return bnl;
+	
+	
+	
+	
+	// BTRS method (NOT WORKING)
+	/*
+	
+	float p = (prob_success < 0.5 ? prob_success : 1.0 - prob_success);
+
+	float spq = powf(num_trials*p*(1-p), 0.5);
+	float b = 1.15 + 2.53 * spq;
+	float a = -0.0873 + 0.0248 * b + 0.01 * p;
+	float c = num_trials*p + 0.5;
+	float v_r = 0.92 - 4.2/b;
+	float us = 0.;
+	float v = 0;
+
+	int bnl, m;
+	float u;
+	float alpha, lpq, h;
+	int var_break = 0;
+	
+	if (num_trials*p < 10)
+	{
+		bnl = 0;
+		for (int j=0; j < num_trials; j++)
+		{
+			if (curand_uniform(rand_state) < p) bnl += 1;
+		}
+		return bnl;
+	}
+
+	while (1)
+	{
+		bnl = -1;
+		while ( bnl < 0 || bnl > num_trials)
+		{
+			u = curand_uniform(rand_state) - 0.5;
+			v = curand_uniform(rand_state);
+			us = 0.5 - abs(u);
+			bnl = (int)floor((2*a/us + b) * u + c);
+			if (us >= 0.07 && v < v_r) var_break = 1;
+			if (var_break == 1) break;
+		}
+		if (var_break == 1) break;
+
+		alpha = (2.83 + 5.1/b)*spq;
+		lpq = logf(p/(1-p));
+		m = (int)floor((num_trials+1)*p);
+		h = lgammaf(m+1) + lgammaf(num_trials-m+1);
+
+		v = v*alpha/(a/(us*us) + b);
+
+		if (v <= h - lgammaf(bnl+1) - lgammaf(num_trials-bnl+1) + (bnl-m)*lpq) var_break = 1;
+		if (var_break == 1) break;
+	}
+
+	if (prob_success != p) bnl = num_trials - bnl;
+	return bnl;
+	
+	*/
+
 }
 
 // used for finding index for 2d histogram array
@@ -410,7 +539,7 @@ __global__ void gpu_full_observables_production_with_hist_spline(int *seed, int 
 		// 	return;
 		// }
 		// else return;
-		
+		//return;
 		
 
 		// ------------------------------------------------
@@ -716,6 +845,7 @@ __global__ void gpu_full_observables_production_with_log_hist_spline(int *seed, 
 		// }
 		// else return;
 		
+		//return;
 		
 
 		// ------------------------------------------------
@@ -780,6 +910,7 @@ __global__ void gpu_full_observables_production_with_log_hist_spline(int *seed, 
 			return;
 		}
 		
+		//return;
 		mcRecombined = gpu_binomial(&s, mcIons, probRecombination);
 		mcPhotons = mcExcitons + mcRecombined;
 		mcElectrons = mcIons - mcRecombined;
@@ -813,7 +944,9 @@ __global__ void gpu_full_observables_production_with_log_hist_spline(int *seed, 
 			return;
 		}
 		
+		//return;
 		mcS1 = gpu_binomial(&s, mcPhotons, *g1Value);
+		//return;
 		mcExtractedElectrons = gpu_binomial(&s, mcElectrons, *extractionEfficiency);
 		mcS2 = (curand_normal(&s) * *gasGainWidth*powf(mcExtractedElectrons, 0.5)) + mcExtractedElectrons**gasGainValue;
 		
@@ -1181,7 +1314,7 @@ __global__ void gpu_full_observables_production_spline(int *seed, int *num_trial
 			return;
 		}
 		
-		mcS1 = (curand_normal(&s) * (pf_res[0] + pf_res[1]*exp(-mcS1/pf_res[2]))) + mcS1;
+		mcS1 = (curand_normal(&s) * (pf_res[0] + pf_res[1]*expf(-mcS1/pf_res[2]))) + mcS1;
 		if (mcS1 < 0) 
 		{	
 			aS1[iteration] = -1;

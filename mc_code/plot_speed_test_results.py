@@ -14,7 +14,8 @@ l_function_calls = [1024*64, 1024*128, 1024*256, 2048*256, 2048*512, 4096*512, 8
 l_c_time = [0.867104, 1.701473, 3.387599, 7.079457, 15.393931, 27.637270, 55.280885]
 l_stock_gpu_time = [0.106817, 0.204687, 0.289345, 0.393346, 0.813838, 1.281815, 2.214502]
 l_lukes_gpu_time = [0.013091, 0.024379, 0.047134, 0.090737, 0.201780, 0.408195, 0.811484]
-l_bellini_gpu = [0.016722, 0.020058, 0.027428, 0.045392, 0.082667, 0.163333, 0.299870] # 121 s on Bellini CPU
+l_upgraded_gpu = [0.016722, 0.020058, 0.027428, 0.045392, 0.082667, 0.163333, 0.299870] # 121 s on upgraded CPU
+
 
 # Matt's GPU: GeForce GT 650M 1024 MB
 # core config = 384*32*16
@@ -30,7 +31,7 @@ l_bellini_gpu = [0.016722, 0.020058, 0.027428, 0.045392, 0.082667, 0.163333, 0.2
 # bandwith = 177.4 GB/s
 # release: Mar 2010
 
-# Bellini GPU: GeForce GTX 970
+# upgraded GPU: GeForce GTX 970
 # core config = 1664*104*56
 # cache = 4 GB
 # GFLOPS = 3494
@@ -39,7 +40,7 @@ l_bellini_gpu = [0.016722, 0.020058, 0.027428, 0.045392, 0.082667, 0.163333, 0.2
 
 l_speed_increase_stock = np.divide(l_c_time, l_stock_gpu_time)
 l_speed_increase_luke = np.divide(l_c_time, l_lukes_gpu_time)
-l_speed_increase_bellini = np.divide(l_c_time, l_bellini_gpu)
+l_speed_increase_upgraded = np.divide(l_c_time, l_upgraded_gpu)
 
 l_million_function_calls = np.asarray(l_function_calls)/1.e6
 
@@ -48,13 +49,33 @@ ax = fig.add_subplot(111)
 
 p_stock = ax.plot(l_million_function_calls, l_speed_increase_stock, 'ro', label='GT 650M (Stock - Mar 2012)')
 p_luke = ax.plot(l_million_function_calls, l_speed_increase_luke, 'bo', label='GTX 480 (Upgraded Consumer Level - Mar 2010)')
-p_bellini = ax.plot(l_million_function_calls, l_speed_increase_bellini, 'go', label='GTX 970 (Upgraded Consumer Level - Nov 2014)')
+p_upgraded = ax.plot(l_million_function_calls, l_speed_increase_upgraded, 'go', label='GTX 970 (Upgraded Consumer Level - Nov 2014)')
 
 ax.set_title('CPU vs GPU Speed Comparison')
 ax.set_xlabel('Millions of Events through MC')
 ax.set_ylabel('Speed increase relative to CPU')
 
 ax.legend(loc='center right')
+
+
+
+l_function_calls_multiple_gpus = [4096*512, 8192*512, 16384*512, 32768*512]
+l_million_function_calls_multiple_gpus = np.asarray(l_function_calls_multiple_gpus)/1.e6
+
+l_upgraded_gpu_only = [3.79, 6.08, 10.571463, 19.47]
+l_upgraded_with_very_old_gpu = [3.43, 5.516, 9.551, 17.73]
+
+l_speed_increase_combined = np.divide(l_upgraded_gpu_only, l_upgraded_with_very_old_gpu)
+
+fig_2 = plt.figure()
+ax_2 = fig_2.add_subplot(111)
+
+p_combined = ax_2.plot(l_million_function_calls_multiple_gpus, l_speed_increase_combined, 'bo', label='GTX 970 with GT 430 vs. GTX 970 only')
+ax_2.set_ylim([0.9, 1.2])
+
+ax_2.set_title('GPU Parallel Study')
+ax_2.set_xlabel('Millions of Events through MC')
+ax_2.set_ylabel('(Time with GTX 970 only) / (Time with GTX 970 and GT 430 in parallel)')
 
 plt.show()
 
