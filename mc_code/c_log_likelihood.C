@@ -62,3 +62,44 @@ float smart_log_likelihood(float *a_flat_data, float *a_flat_mc, int num_bins, i
 	//printf("%f", total_log_likelihood);
 	return total_log_likelihood;
 }
+
+
+
+float log_likelihood_normalized_pdf(float *a_flat_data, float *a_flat_mc_normalized, int num_bins, int num_data_pts, float confidence_interval)
+{
+	float total_log_likelihood = 0.;
+	//float binom_prob = 1. - pow((1.-confidence_interval),(1./num_mc_events));
+	
+	
+	for (int bin_number=0; bin_number < num_bins; bin_number++)
+	{
+		
+		//if (a_flat_mc[bin_number]*num_mc_events/scale_normalized_to_mc_events < 800) continue;
+		if (a_flat_data[bin_number] < 5) continue;
+		
+		if (a_flat_data[bin_number] != 0 && a_flat_mc_normalized[bin_number] == 0)
+		{
+			//continue;
+			//total_log_likelihood += lgamma(num_mc_events+1.0) - lgamma(a_flat_data[bin_number]+1.0) - lgamma(num_mc_events-a_flat_data[bin_number]+1.0) + (a_flat_data[bin_number])*log(binom_prob) + (num_mc_events-a_flat_data[bin_number])*log(1-binom_prob);
+			//printf("No mc events: %f\n", lgamma(num_mc_events+1.0) - lgamma(a_flat_data[bin_number]+1.0) - lgamma(num_mc_events-a_flat_data[bin_number]+1.0) + (a_flat_data[bin_number])*log(binom_prob) + (num_mc_events-a_flat_data[bin_number])*log(1-binom_prob));
+		}
+		else if (a_flat_data[bin_number] == 0 && a_flat_mc_normalized[bin_number] == 0)
+			continue;
+		else
+		{
+			
+			total_log_likelihood += a_flat_data[bin_number]*log(a_flat_mc_normalized[bin_number]*num_data_pts) - a_flat_mc_normalized[bin_number]*num_data_pts - lgamma(a_flat_data[bin_number]+1.0);
+			printf("\nbin %d:%f\n\n", bin_number, a_flat_data[bin_number]*log(a_flat_mc_normalized[bin_number]*num_data_pts) - a_flat_mc_normalized[bin_number]*num_data_pts - lgamma(a_flat_data[bin_number]+1.0));
+		}
+	}
+	printf("tot ll matching: %f\n\n", total_log_likelihood);
+	return total_log_likelihood;
+
+
+
+}
+
+
+
+
+

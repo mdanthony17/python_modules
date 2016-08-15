@@ -40,6 +40,10 @@ cuda_full_observables_production_code ="""
 
 extern "C" {
 
+#define CURAND_CALL ( x ) do { if (( x ) != CURAND_STATUS_SUCCESS ) {\
+printf (" Error at % s :% d \ n " , __FILE__ , __LINE__ ) ;\
+return EXIT_FAILURE ;}} while (0)
+
 __device__ int gpu_binomial(curandState_t *rand_state, int num_successes, float prob_success)
 {
 	int x = 0;
@@ -50,16 +54,31 @@ __device__ int gpu_binomial(curandState_t *rand_state, int num_successes, float 
 	return x;
 }
 
-__global__ void gpu_full_observables_production(int *seed, int *num_trials, float *aS1, float *aS2, float *aEnergy, float *photonYield, float *chargeYield, float *excitonToIonRatio, float *g1Value, float *extractionEfficiency, float *gasGainValue, float *gasGainWidth, float *speRes, float *intrinsicResS1, float *intrinsicResS2)
+
+__global__ void setup_kernel (int nthreads, curandState *state, unsigned long long seed, unsigned long long offset)
+{
+	int id = blockIdx.x * blockDim.x * blockDim.y + threadIdx.y * blockDim.x + threadIdx.x;
+	if (id >= nthreads)
+		return;
+	/* Each thread gets same seed, a different sequence number, no offset */
+	curand_init (seed, id, offset, &state[id]);
+}
+
+
+
+
+__global__ void gpu_full_observables_production(curandState *state, int *num_trials, float *aS1, float *aS2, float *aEnergy, float *photonYield, float *chargeYield, float *excitonToIonRatio, float *g1Value, float *extractionEfficiency, float *gasGainValue, float *gasGainWidth, float *speRes, float *intrinsicResS1, float *intrinsicResS2)
 {
 
 	// start random number generator
-	curandState s;
 	//const int iteration = blockIdx.x * blockDim.x + threadIdx.x;
-	const int iteration = blockIdx.x * blockDim.x * blockDim.y + threadIdx.y * blockDim.x + threadIdx.x;
+	int iteration = blockIdx.x * blockDim.x * blockDim.y + threadIdx.y * blockDim.x + threadIdx.x;
+	
+	curandState s = state[iteration];
 
 	//curand_init(0, 0, 0, &s); // for debugging
-	curand_init(*seed % iteration, 0, 0, &s);
+	//curand_init(*seed + iteration, 0, 0, &s);
+	//curand_init(iteration, 0, 0, &s);
 	
 	float probRecombination = (( (*excitonToIonRatio+1) * *photonYield )/(*photonYield+*chargeYield) - *excitonToIonRatio);
 
@@ -228,6 +247,8 @@ __global__ void gpu_full_observables_production(int *seed, int *num_trials, floa
 		aS1[iteration] = mcS1;
 		aS2[iteration] = mcS2;
 		
+		//state[iteration] = s;
+		
 	
 	}
 
@@ -248,6 +269,7 @@ from pycuda.compiler import SourceModule
 import pycuda.driver as drv
 import pycuda.tools
 import pycuda.gpuarray
+import pycuda.curandom
 
 import rootpy.compiled as C
 C.register_file('c_full_observables_production_no_eff.C', ['full_matching_loop'])
@@ -258,8 +280,8 @@ drv.init()
 dev = drv.Device(0)
 ctx = dev.make_context(drv.ctx_flags.SCHED_AUTO | drv.ctx_flags.MAP_HOST)
 
-grid_d1 = 8192/2
-block_d1 = 512
+grid_d1 = 1024
+block_d1 = 128
 num_entries = int(grid_d1*block_d1)
 num_iterations = 100
 
@@ -297,6 +319,14 @@ print 'Second time: %f\n' % (time.time() - startTime)
 
 observables_func = pycuda.compiler.SourceModule(cuda_full_observables_production_code, no_extern_c=True).get_function('gpu_full_observables_production')
 
+setup_kernel = pycuda.compiler.SourceModule(cuda_full_observables_production_code, no_extern_c=True).get_function('setup_kernel')
+
+rng_states = drv.mem_alloc(num_entries*pycuda.characterize.sizeof('curandStateXORWOW', '#include <curand_kernel.h>'))
+setup_kernel(np.int32(num_entries), rng_states, np.uint64(0), np.uint64(0), grid=(grid_d1,1), block=(block_d1,1,1))
+
+
+#g = pycuda.curandom.XORWOWRandomNumberGenerator()
+
 
 
 # set variables for full matching
@@ -306,7 +336,6 @@ aEnergy = pycuda.gpuarray.to_gpu(aEnergy)
 
 
 
-seed = np.asarray(int(time.time()*1000), dtype=np.int32)
 num_trials = np.asarray(num_entries, dtype=np.int32)
 photonYield = np.asarray(5, dtype=np.float32)
 chargeYield = np.asarray(5, dtype=np.float32)
@@ -331,14 +360,15 @@ for i in xrange(num_iterations):
 	aS2 = np.full(num_entries, -1, dtype=np.float32)
 	aS2_gpu = pycuda.gpuarray.to_gpu(aS2)
 
+	#time.sleep(1)
 
-	tArgs = [drv.In(seed), drv.In(num_trials), aS1_gpu.gpudata, aS2_gpu.gpudata, aEnergy.gpudata, drv.In(photonYield), drv.In(chargeYield), drv.In(excitonToIonRatio), drv.In(g1Value), drv.In(extractionEfficiency), drv.In(gasGainValue), drv.In(gasGainWidth), drv.In(speRes), drv.In(intrinsicResS1), drv.In(intrinsicResS2)]
+	tArgs = [rng_states, drv.In(num_trials), aS1_gpu.gpudata, aS2_gpu.gpudata, aEnergy.gpudata, drv.In(photonYield), drv.In(chargeYield), drv.In(excitonToIonRatio), drv.In(g1Value), drv.In(extractionEfficiency), drv.In(gasGainValue), drv.In(gasGainWidth), drv.In(speRes), drv.In(intrinsicResS1), drv.In(intrinsicResS2)]
 
 	observables_func(*tArgs, grid=(grid_d1,1), block=(block_d1,1,1))
 	aS1 = aS1_gpu.get()
 	aS2 = aS2_gpu.get()
-	#print aS1[0], aS2[0]
-	#print aS1[1], aS2[1]
+	print aS1[0], aS2[0]
+	print aS1[1], aS2[1]
 
 print 'Time for %d iterations on GPU: %f\n' % (num_iterations, time.time() - startTime)
 

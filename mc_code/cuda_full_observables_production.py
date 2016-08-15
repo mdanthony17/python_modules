@@ -39,17 +39,18 @@ extern "C" {
 
 __device__ int gpu_binomial(curandState_t *rand_state, int num_trials, float prob_success)
 {
-	/*
+
 	int x = 0;
 	for(int i = 0; i < num_trials; i++) {
     if(curand_uniform(rand_state) < prob_success)
 		x += 1;
 	}
 	return x;
-	*/
 	
+	/*
 	
 	// Rejection Method (from 7.3 of numerical recipes)
+	// slower on 970!!
 	
 	float pi = 3.1415926535;
 	int j;
@@ -113,7 +114,7 @@ __device__ int gpu_binomial(curandState_t *rand_state, int num_trials, float pro
 	if (prob_success != p) bnl = num_trials - bnl;
 	return bnl;
 	
-	
+	*/
 	
 	
 	// BTRS method (NOT WORKING)
@@ -764,19 +765,37 @@ __global__ void gpu_full_observables_production_with_hist_spline(int *seed, int 
 }
 
 
+#define CURAND_CALL ( x ) do { if (( x ) != CURAND_STATUS_SUCCESS ) {\
+printf (" Error at % s :% d \ n " , __FILE__ , __LINE__ ) ;\
+return EXIT_FAILURE ;}} while (0)
+
+__global__ void setup_kernel (int nthreads, curandState *state, unsigned long long seed, unsigned long long offset)
+{
+	int id = blockIdx.x * blockDim.x * blockDim.y + threadIdx.y * blockDim.x + threadIdx.x;
+	if (id >= nthreads)
+		return;
+	/* Each thread gets same seed, a different sequence number, no offset */
+	curand_init (seed, id, offset, &state[id]);
+}
 
 
-__global__ void gpu_full_observables_production_with_log_hist_spline(int *seed, int *num_trials, float *meanField, float *aEnergy, int *numSplinePoints, float *aEnergySplinePoints, float *aPhotonYieldSplinePoints, float *aChargeYieldSplinePoints, float *g1Value, float *extractionEfficiency, float *gasGainValue, float *gasGainWidth, float *speRes, float *intrinsicResS1, float *intrinsicResS2, float *pf_res, float *excitonToIonPar0RV, float *excitonToIonPar1RV, float *excitonToIonPar2RV, float *pf_eff_par0, float *pf_eff_par1, float *s1_eff_par0, float *s1_eff_par1, float *s2_eff_par0, float *s2_eff_par1, float *nr_band_cut, int *num_bins_s1, float *bin_edges_s1, int *num_bins_log_s2_s1, float *bin_edges_log_s2_s1, int *hist_2d_array)
+
+
+__global__ void gpu_full_observables_production_with_log_hist_spline(curandState *state, int *num_trials, float *meanField, float *aEnergy, int *numSplinePoints, float *aEnergySplinePoints, float *aPhotonYieldSplinePoints, float *aChargeYieldSplinePoints, float *g1Value, float *extractionEfficiency, float *gasGainValue, float *gasGainWidth, float *speRes, float *intrinsicResS1, float *intrinsicResS2, float *pf_res, float *excitonToIonPar0RV, float *excitonToIonPar1RV, float *excitonToIonPar2RV, float *pf_eff_par0, float *pf_eff_par1, float *s1_eff_par0, float *s1_eff_par1, float *s2_eff_par0, float *s2_eff_par1, float *nr_band_cut, int *num_bins_s1, float *bin_edges_s1, int *num_bins_log_s2_s1, float *bin_edges_log_s2_s1, int *hist_2d_array)
 {
 
 	// start random number generator
-	curandState s;
+	//curandState s;
 	//const int iteration = blockIdx.x * blockDim.x + threadIdx.x;
-	const int iteration = blockIdx.x * blockDim.x * blockDim.y + threadIdx.y * blockDim.x + threadIdx.x;
+	
+	int iteration = blockIdx.x * blockDim.x * blockDim.y + threadIdx.y * blockDim.x + threadIdx.x;
 
 	//curand_init(iteration, 0, 0, &s); // for debugging
 	//curand_init(*seed * iteration, 0, 0, &s);
-	curand_init((*seed << 20) + iteration, 0, 0, &s);
+	//curand_init((*seed << 20) + iteration, 0, 0, &s);
+	//curand_init(0, iteration, 0, &s);
+	
+	curandState s = state[iteration];
 	
 	float mcEnergy;
 	int mcQuanta;
@@ -807,6 +826,8 @@ __global__ void gpu_full_observables_production_with_log_hist_spline(int *seed, 
 	
 	float probRecombination;
 	
+	int s1_bin, log_s2_s1_bin;
+	
 	if (iteration < *num_trials)
 	{
 	
@@ -819,8 +840,11 @@ __global__ void gpu_full_observables_production_with_log_hist_spline(int *seed, 
 		//aS1[iteration] = mcEnergy;
 		//return;
 		
-		if (mcEnergy < aEnergySplinePoints[0] || mcEnergy > aEnergySplinePoints[*numSplinePoints-1]) return;
-		
+		if (mcEnergy < aEnergySplinePoints[0] || mcEnergy > aEnergySplinePoints[*numSplinePoints-1]) 
+		{
+			state[iteration] = s;
+			return;
+		}
 		
 		// ------------------------------------------------
 		//  Interpolate the photon and charge yield
@@ -892,6 +916,7 @@ __global__ void gpu_full_observables_production_with_log_hist_spline(int *seed, 
 		probExcitonSuccess = 1. - 1./(1. + excitonToIonRatio);
 		if (probExcitonSuccess < 0 || probExcitonSuccess > 1) 
 		{	
+			state[iteration] = s;
 			return;
 		}
 		
@@ -907,6 +932,7 @@ __global__ void gpu_full_observables_production_with_log_hist_spline(int *seed, 
 
 		if (mcIons < 1 || probRecombination < 0 || probRecombination > 1) 
 		{	
+			state[iteration] = s;
 			return;
 		}
 		
@@ -925,14 +951,17 @@ __global__ void gpu_full_observables_production_with_log_hist_spline(int *seed, 
 		
 		if (mcPhotons < 1 || *g1Value < 0 || *g1Value > 1) 
 		{	
+			state[iteration] = s;
 			return;
 		}
 		// if (mcElectrons < 1 || *extractionEfficiency < 0 || *extractionEfficiency > 1)
 		// {
+		//	   state[iteration] = s;
 		//	   return;
 		// }
 		if (mcElectrons < 1 || *extractionEfficiency < 0)
 		{	
+			state[iteration] = s;
 			return;
 		}
 		if (*extractionEfficiency > 1)
@@ -941,6 +970,7 @@ __global__ void gpu_full_observables_production_with_log_hist_spline(int *seed, 
 		}
 		if (*gasGainWidth <= 0) 
 		{	
+			state[iteration] = s;
 			return;
 		}
 		
@@ -952,15 +982,17 @@ __global__ void gpu_full_observables_production_with_log_hist_spline(int *seed, 
 		
 		if (mcS1 < 0) 
 		{	
+			state[iteration] = s;
 			return;
 		}
 		if (mcS2 < 0) 
 		{	
+			state[iteration] = s;
 			return;
 		}
 		
-		//aS1[iteration] = mcS1;
-		//aS2[iteration] = mcS2;
+		//hist_2d_array[0] = mcS1;
+		//hist_2d_array[1] = mcS2;
 		//return;
 		
 		
@@ -974,24 +1006,28 @@ __global__ void gpu_full_observables_production_with_log_hist_spline(int *seed, 
 		
 		if (*speRes <= 0 || *intrinsicResS1 <= 0 || *intrinsicResS2 <= 0) 
 		{	
+			state[iteration] = s;
 			return;
 		}
 		
 		mcS1 = (curand_normal(&s) * *speRes*powf(mcS1, 0.5)) + mcS1;
 		if (mcS1 < 0) 
 		{	
+			state[iteration] = s;
 			return;
 		}
 		
 		mcS1 = (curand_normal(&s) * (pf_res[0] + pf_res[1]*exp(-mcS1/pf_res[2]))) + mcS1;
 		if (mcS1 < 0) 
 		{	
+			state[iteration] = s;
 			return;
 		}
 		
 		mcS1 = (curand_normal(&s) * *intrinsicResS1*mcS1) + mcS1;
 		if (mcS1 < 0) 
 		{	
+			state[iteration] = s;
 			return;
 		}
 		
@@ -999,8 +1035,13 @@ __global__ void gpu_full_observables_production_with_log_hist_spline(int *seed, 
 		mcS2 = (curand_normal(&s) * *intrinsicResS2*mcS2) + mcS2;
 		if (mcS2 < 0) 
 		{	
+			state[iteration] = s;
 			return;
 		}
+		
+		//hist_2d_array[0] = mcS1;
+		//hist_2d_array[1] = mcS2;
+		//return;
 		
 		
 		// Old and cut
@@ -1011,38 +1052,47 @@ __global__ void gpu_full_observables_production_with_log_hist_spline(int *seed, 
 				
 		
 		// Band cut
-		if ((log10f(mcS2/mcS1) < (nr_band_cut[0] + nr_band_cut[1]*mcS1)) || (log10f(mcS2/mcS1) > (nr_band_cut[2]*exp(-mcS1/nr_band_cut[3]) + nr_band_cut[4])))
+		if ((log10f(mcS2/mcS1) < (nr_band_cut[0] + nr_band_cut[1]*mcS1)) || (log10f(mcS2/mcS1) > (nr_band_cut[2]*expf(-mcS1/nr_band_cut[3]) + nr_band_cut[4])))
 		{	
+			state[iteration] = s;
 			return;
 		}
 		
 	
 		
 		// trig efficiency
-		s2_eff_prob = 1. / (1. + exp(-(mcS2-*s2_eff_par0) / *s2_eff_par1));
+		s2_eff_prob = 1. / (1. + expf(-(mcS2-*s2_eff_par0) / *s2_eff_par1));
 		if (curand_uniform(&s) > s2_eff_prob)
 		{	
+			state[iteration] = s;
 			return;
 		}
 		
 		// peak finder efficiency
-		pf_eff_prob = 1. / (1. + exp(-(mcS1-*pf_eff_par0) / *pf_eff_par1));
+		pf_eff_prob = 1. / (1. + expf(-(mcS1-*pf_eff_par0) / *pf_eff_par1));
 		// if (curand_uniform(&s) > (1. - exp(-(mcS1-*pf_eff_par0) / *pf_eff_par1)))
 		// if (curand_uniform(&s) > (exp(-*pf_eff_par0*exp(-mcS1 * *pf_eff_par1))))
 		if (curand_uniform(&s) > pf_eff_prob)
 		{
+			state[iteration] = s;
 			return;
 		}
 		
 		
 		// s1 efficiency
-		s1_eff_prob = 1. / (1. + exp(-(mcS1-*s1_eff_par0) / *s1_eff_par1));
+		s1_eff_prob = 1. / (1. + expf(-(mcS1-*s1_eff_par0) / *s1_eff_par1));
 		// if (curand_uniform(&s) > (1. - exp(-(mcS1-*s1_eff_par0) / *s1_eff_par1)))
 		// if (curand_uniform(&s) > (exp(-*s1_eff_par0*exp(-mcS1 * *s1_eff_par1))))
 		if (curand_uniform(&s) > s1_eff_prob)
 		{
+			state[iteration] = s;
 			return;
 		}
+		
+		
+		//hist_2d_array[0] = mcS1;
+		//hist_2d_array[1] = mcS2;
+		//return;
 		
 			
 		// hist_2d_array[0] = *s2_eff_par0;
@@ -1053,21 +1103,30 @@ __global__ void gpu_full_observables_production_with_log_hist_spline(int *seed, 
 		
 		// find indices of s1 and s2 bins for 2d histogram
 		
-		int s1_bin = gpu_find_lower_bound(num_bins_s1, bin_edges_s1, mcS1);
-		int log_s2_s1_bin = gpu_find_lower_bound(num_bins_log_s2_s1, bin_edges_log_s2_s1, log10f(mcS2/mcS1));
+		s1_bin = gpu_find_lower_bound(num_bins_s1, bin_edges_s1, mcS1);
+		log_s2_s1_bin = gpu_find_lower_bound(num_bins_log_s2_s1, bin_edges_log_s2_s1, log10f(mcS2/mcS1));
 		
 		
 		if (s1_bin == -1 || log_s2_s1_bin == -1)
 		{
+			state[iteration] = s;
 			return;
 		}
+		
+		//hist_2d_array[0] = mcS1;
+		//hist_2d_array[1] = mcS2;
+		//return;
 		
 		// hist_2d_array[0] = s1_bin + *num_bins_s1*log_s2_s1_bin;
 		// hist_2d_array[1] = s1_bin;
 		// hist_2d_array[2] = log_s2_s1_bin;
 		
-		hist_2d_array[s1_bin + *num_bins_s1*log_s2_s1_bin] += 1;
+		//hist_2d_array[s1_bin + *num_bins_s1*log_s2_s1_bin] += 1;
+		atomicAdd(&hist_2d_array[s1_bin + *num_bins_s1*log_s2_s1_bin], 1);
+		//hist_2d_array[iteration] += s1_bin + *num_bins_s1*log_s2_s1_bin;
+		//hist_2d_array[iteration] += mcS1;
 		
+		state[iteration] = s;
 		return;
 	
 	}
