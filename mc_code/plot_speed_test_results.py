@@ -15,6 +15,7 @@ l_c_time = [0.867104, 1.701473, 3.387599, 7.079457, 15.393931, 27.637270, 55.280
 l_stock_gpu_time = [0.106817, 0.204687, 0.289345, 0.393346, 0.813838, 1.281815, 2.214502]
 l_lukes_gpu_time = [0.013091, 0.024379, 0.047134, 0.090737, 0.201780, 0.408195, 0.811484]
 l_upgraded_gpu = [0.016722, 0.020058, 0.027428, 0.045392, 0.082667, 0.163333, 0.299870] # 121 s on upgraded CPU
+l_gtx_1080 = [/10., /10., /10., /10., /10., /10., 1.953962/10.]
 
 
 # Matt's GPU: GeForce GT 650M 1024 MB
@@ -59,19 +60,29 @@ ax.legend(loc='center right')
 
 
 
-l_function_calls_multiple_gpus = [4096*512, 8192*512, 16384*512, 32768*512]
-l_million_function_calls_multiple_gpus = np.asarray(l_function_calls_multiple_gpus)/1.e6
+l_function_calls_mismatched_gpus = [4096*512, 8192*512, 16384*512, 32768*512]
+l_million_function_calls_mismatched_gpus = np.asarray(l_function_calls_mismatched_gpus)/1.e6
 
 l_upgraded_gpu_only = [3.79, 6.08, 10.571463, 19.47]
 l_upgraded_with_very_old_gpu = [3.43, 5.516, 9.551, 17.73]
 
-l_speed_increase_combined = np.divide(l_upgraded_gpu_only, l_upgraded_with_very_old_gpu)
+l_speed_increase_mismatched = np.divide(l_upgraded_gpu_only, l_upgraded_with_very_old_gpu)
+
+l_function_calls_matched_gpus = [2048*1024, 4096*1024, 8192*1024, 16384*1024, 32768*1024, 65536*1024]
+l_million_function_calls_matched_gpus = np.asarray(l_function_calls_matched_gpus)/1.e6
+l_single_970 = [9.916, 19.13, 37.66, 74.81, 148.4, 295.8]
+l_gtx_1080 = [3.155, 5.126, 10.56, 21.89, 37.53, 73.29]
+l_dual_970 = [5.209, 10.72, 20.44, 40.27, 81.43, 160.9]
+# both done with 500 iterations each
+
+l_speed_increase_matched = np.divide(l_single_970, l_dual_970)
 
 fig_2 = plt.figure()
 ax_2 = fig_2.add_subplot(111)
 
-p_combined = ax_2.plot(l_million_function_calls_multiple_gpus, l_speed_increase_combined, 'bo', label='GTX 970 with GT 430 vs. GTX 970 only')
-ax_2.set_ylim([0.9, 1.2])
+p_combined = ax_2.plot(l_million_function_calls_mismatched_gpus, l_speed_increase_mismatched, 'bo', label='GTX 970 with GT 430 vs. GTX 970 only')
+p_dual_970 = ax_2.plot(l_million_function_calls_matched_gpus, l_speed_increase_matched, 'ro', label='Dual GTX 970s vs. GTX 970 only')
+ax_2.set_ylim([0.9, 2.0])
 
 ax_2.set_title('GPU Parallel Study')
 ax_2.set_xlabel('Millions of Events through MC')

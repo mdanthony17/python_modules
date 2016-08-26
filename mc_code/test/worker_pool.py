@@ -11,7 +11,7 @@ import threading, time, os, subprocess, sys
 #from multiprocessing import Pool, Queue, Process
 from Queue import Queue
 
-num_workers = 2
+num_workers = 1
 
 class gpu_pool:
 	def __init__(self, num_gpus, grid_dim, block_dim):
@@ -19,11 +19,7 @@ class gpu_pool:
 		self.grid_dim = grid_dim
 		self.block_dim = block_dim
 		self.observables_code = cuda_full_observables_production_code
-		self.lock = threading.Lock()
-		
-		self.l_gpu_funcs = [0. for i in xrange(self.num_gpus)]
-		self.l_gpu_modules = [0. for i in xrange(self.num_gpus)]
-		self.l_gpu_streams = [0. for i in xrange(self.num_gpus)]
+	
 		
 		self.alive = True
 		self.q_gpu = Queue()
@@ -58,14 +54,12 @@ class gpu_pool:
 		self.l_gpu_modules[device_num] = pycuda.compiler.SourceModule(cuda_full_observables_production_code, no_extern_c=True)
 		self.l_gpu_funcs[device_num] = self.l_gpu_modules[device_num].get_function('gpu_full_observables_production')
 		
-		self.l_gpu_streams[device_num] = drv.Stream()
-	
 		grid_dim = self.grid_dim
 		block_dim = self.block_dim
 		num_entries = grid_dim*block_dim
 		
 		aEnergy = np.full(num_entries, 10., dtype=np.float32)
-		aEnergy_gpu = pycuda.gpuarray.to_gpu_async(aEnergy, stream=self.l_gpu_streams[device_num])
+		aEnergy_gpu = pycuda.gpuarray.to_gpu_async(aEnergy)
 		#a_gpu_energy = drv.to_device(aEnergy)
 		
 		
@@ -78,15 +72,16 @@ class gpu_pool:
 		
 		# wrap up function
 		# modeled off of pycuda's autoinit
-		#def _finish_up(ctx):
-		#	print 'wrapping up'
-		#	ctx.pop()
-		#
-		#	from pycuda.tools import clear_context_caches
-		#	clear_context_caches()
+		def _finish_up(ctx):
+			print 'wrapping up'
+			ctx.pop()
 		
-		#import atexit
+			from pycuda.tools import clear_context_caches
+			clear_context_caches()
+		
+		import atexit
 		#atexit.register(_finish_up, [ctx])
+		atexit.register(ctx.pop)
 		
 	
 		while self.alive:
@@ -96,10 +91,10 @@ class gpu_pool:
 				#self.lock.acquire()
 				aS1 = np.full(num_entries, -2, dtype=np.float32)
 				#self.a_gpu_s1 = drv.to_device(self.aS1)
-				aS1_gpu = pycuda.gpuarray.to_gpu_async(aS1, stream=self.l_gpu_streams[device_num])
+				aS1_gpu = pycuda.gpuarray.to_gpu_async(aS1)
 				aS2 = np.full(num_entries, -2, dtype=np.float32)
 				#self.a_gpu_s2 = drv.to_device(self.aS2)
-				aS2_gpu = pycuda.gpuarray.to_gpu_async(aS2, stream=self.l_gpu_streams[device_num])
+				aS2_gpu = pycuda.gpuarray.to_gpu_async(aS2)
 				
 				#self.lock.release()
 				#print args
@@ -113,19 +108,13 @@ class gpu_pool:
 			
 				#print args
 			
-				#self.lock.acquire()
 				r_value = self.l_gpu_funcs[device_num](*args, grid=(grid_dim,1), block=(block_dim,1,1))
-				#self.lock.release()
 				if task == sys.exit:
 					apply(task, [0])
 			
-				#self.lock.acquire()
 				aS1_gpu.get(ary=aS1)
 				aS2_gpu.get(ary=aS2)
-				#self.lock.release()
 				
-				#self.a_gpu_s1.free()
-				#self.a_gpu_s2.free()
 				
 				#print id_num, dev.name(), aS2
 				#sys.stdout.flush()
@@ -142,6 +131,8 @@ class gpu_pool:
 	def map(self, func, l_args):
 		start_time = time.time()
 		
+		print l_args
+		
 		for id_num, args in enumerate(l_args):
 			self.q_in.put((func, args, id_num))
 
@@ -149,6 +140,9 @@ class gpu_pool:
 			time.sleep(0.1)
 		print 'Time calling function: %.3e' % (time.time() - start_time)
 		sys.stdout.flush()
+		
+		l_q = list(self.q_out.queue)
+		print l_q
 
 
 	def close(self):
