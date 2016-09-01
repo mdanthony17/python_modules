@@ -39,7 +39,7 @@ float smart_log_likelihood(float *a_flat_data, float *a_flat_mc, int num_bins, i
 	{
 		
 		//if (a_flat_mc[bin_number]*num_mc_events/scale_normalized_to_mc_events < 800) continue;
-		if (a_flat_data[bin_number] < 5) continue;
+		if (a_flat_data[bin_number] < 3) continue;
 		
 		if (a_flat_data[bin_number] != 0 && a_flat_mc[bin_number] == 0)
 		{
@@ -52,11 +52,11 @@ float smart_log_likelihood(float *a_flat_data, float *a_flat_mc, int num_bins, i
 		else
 		{
 			
-			//total_log_likelihood += a_flat_data[bin_number]*log(a_flat_mc[bin_number]) - a_flat_mc[bin_number] - lgamma(a_flat_data[bin_number]+1.0);
-			total_log_likelihood += log_likelihood_matching_uncertainty(a_flat_data[bin_number], scale, a_flat_mc[bin_number]*scale);
+			total_log_likelihood += a_flat_data[bin_number]*log(a_flat_mc[bin_number]) - a_flat_mc[bin_number] - lgamma(a_flat_data[bin_number]+1.0);
+			//total_log_likelihood += log_likelihood_matching_uncertainty(a_flat_data[bin_number], scale, a_flat_mc[bin_number]*scale);
 			//printf("\n\ndata:%f\nmc:%f\nscale:%f\nscaled mc:%f\n", a_flat_data[bin_number], a_flat_mc[bin_number]*num_mc_events/scale_normalized_to_mc_events, num_mc_events/scale_normalized_to_mc_events, a_flat_mc[bin_number]);
 			//printf("MC and data (normal likelihood): %f\n", a_flat_data[bin_number]*log(a_flat_mc[bin_number]) - a_flat_mc[bin_number] - lgamma(a_flat_data[bin_number]+1.0));
-			//printf("MC and data (matching uncertainty): %f\n", log_likelihood_matching_uncertainty(a_flat_data[bin_number], num_mc_events/scale_normalized_to_mc_events, a_flat_mc[bin_number]*num_mc_events/scale_normalized_to_mc_events));
+			//printf("MC and data (matching uncertainty): %f\n", a_flat_data[bin_number]*log(a_flat_mc[bin_number]) - a_flat_mc[bin_number] - lgamma(a_flat_data[bin_number]+1.0));
 		}
 	}
 	//printf("%f", total_log_likelihood);
