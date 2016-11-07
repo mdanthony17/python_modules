@@ -23,7 +23,7 @@ float log_likelihood_matching_uncertainty(float data, float scale, int num_mc_ev
 
 
 
-float smart_log_likelihood(float *a_flat_data, float *a_flat_mc, int num_bins, int num_mc_events, float scale_const, int num_data_pts, float confidence_interval)
+float smart_log_likelihood_old(float *a_flat_data, float *a_flat_mc, int num_bins, int num_mc_events, float scale_const, int num_data_pts, float confidence_interval)
 {
 	// a_flat_mc[i] = mc_events_in_bin[i]*scale_const*num_data_pts/num_mc_events
 	// a_flat_mc[i] = mc_events_in_bin[i] / scale
@@ -39,7 +39,7 @@ float smart_log_likelihood(float *a_flat_data, float *a_flat_mc, int num_bins, i
 	{
 		
 		//if (a_flat_mc[bin_number]*num_mc_events/scale_normalized_to_mc_events < 800) continue;
-		if (a_flat_data[bin_number] < 3) continue;
+		if (a_flat_data[bin_number] < 5) continue;
 		
 		if (a_flat_data[bin_number] != 0 && a_flat_mc[bin_number] == 0)
 		{
@@ -99,6 +99,35 @@ float log_likelihood_normalized_pdf(float *a_flat_data, float *a_flat_mc_normali
 
 }
 
+
+
+
+float smart_log_likelihood(float *a_flat_data, float *a_flat_mc, int num_bins, int num_mc_events, float confidence_interval)
+{
+
+	float total_log_likelihood = 0.;
+	float binom_prob = 1. - pow((1.-confidence_interval),(1./num_mc_events));
+	
+	for (int bin_number=0; bin_number < num_bins; bin_number++)
+	{
+		
+		if (a_flat_data[bin_number] < 5) continue;
+		
+		if (a_flat_data[bin_number] != 0 && a_flat_mc[bin_number] == 0)
+		{
+			total_log_likelihood += lgamma(num_mc_events+1.0) - lgamma(a_flat_data[bin_number]+1.0) - lgamma(num_mc_events-a_flat_data[bin_number]+1.0) + (a_flat_data[bin_number])*log(binom_prob) + (num_mc_events-a_flat_data[bin_number])*log(1-binom_prob);
+		}
+		else if (a_flat_data[bin_number] == 0 && a_flat_mc[bin_number] == 0)
+			continue;
+		else
+		{
+			
+			total_log_likelihood += a_flat_data[bin_number]*log(a_flat_mc[bin_number]) - a_flat_mc[bin_number] - lgamma(a_flat_data[bin_number]+1.0);
+			
+		}
+	}
+	return total_log_likelihood;
+}
 
 
 

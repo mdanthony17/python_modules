@@ -669,7 +669,6 @@ __global__ void gpu_full_observables_production_with_log_hist_lindhard_model(cur
 		excitonToIonRatio = *alpha * powf(*meanField,-*zeta) * ( 1 - exp(-*beta * mc_dimensionless_energy) );
         
 		
-		
 		// ------------------------------------------------
 		//  Convert to excitons and ions
 		// ------------------------------------------------
@@ -695,6 +694,7 @@ __global__ void gpu_full_observables_production_with_log_hist_lindhard_model(cur
 		probRecombination = 1. - logf(1 + mcIons*sigma)/(mcIons*sigma);
         
         
+		//printf("hello %f\\n", probRecombination);
         
 		
 		// ------------------------------------------------
@@ -729,7 +729,7 @@ __global__ void gpu_full_observables_production_with_log_hist_lindhard_model(cur
         
 		mcPhotons = gpu_binomial(&s, mcExcitons, penning_factor);
         
-        //printf("hello %d\\n", mcPhotons);
+        //printf("hello %f\\n", penning_factor);
 		
 		// ------------------------------------------------
 		//  Convert to S1 and S2 BEFORE smearing
