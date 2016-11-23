@@ -88,6 +88,14 @@ ax_2.set_title('GPU Parallel Study')
 ax_2.set_xlabel('Millions of Events through MC')
 ax_2.set_ylabel('(Time with GTX 970 only) / (Time with GTX 970 and GT 430 in parallel)')
 
+fig_3, ax_3 = plt.subplots(1)
+print l_million_function_calls_matched_gpus, np.divide(l_single_970, l_gtx_1080)
+ax_3.plot(l_million_function_calls_matched_gpus, np.divide(l_single_970, l_gtx_1080), 'bo')
+
+ax_3.set_title('Relative Speed of GTX 1080 and 970')
+ax_3.set_xlabel('Millions of Events through MC')
+ax_3.set_ylabel('(Time for GTX 970) / (Time for GTX 1080)')
+
 plt.show()
 
 
