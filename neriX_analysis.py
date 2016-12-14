@@ -810,8 +810,8 @@ class neriX_analysis:
                 
                 
                 
-                self.lT1[i].SetAlias('ctS1sTotBottom','(%f/%f)*S1sTotBottom' % (1.48e6, 9.49e5))
-                self.lT1[i].SetAlias('ctS2sTotBottom','(%f/%f)*S2sTotBottom' % (1.48e6, 9.49e5))
+                self.lT1[i].SetAlias('ctS1sTotBottom','(%f/%f)*S1sTotBottom' % (1.48e6, 9.35e5))
+                self.lT1[i].SetAlias('ctS2sTotBottom','(%f/%f)*S2sTotBottom' % (1.48e6, 9.35e5))
                 
                 self.lT1[i].SetAlias('cpS1sTotBottom','(1./(%f + %f*Z))*ctS1sTotBottom' % (8.48e-1, -1.29e-2))
                 
