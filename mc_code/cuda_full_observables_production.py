@@ -1190,7 +1190,7 @@ __global__ void gpu_full_observables_production_with_log_hist_single_energy(cura
 
 
 
-__global__ void gpu_full_observables_production_with_log_hist_single_energy_with_bkg(curandState *state, int *num_trials, float *meanField, float *aEnergy, float *a_energy_bkg, float *photonYield, float *chargeYield, float *g1Value, float *extractionEfficiency, float *gasGainValue, float *gasGainWidth, float *speRes, float *intrinsicResS1, float *intrinsicResS2, float *pf_res, float *excitonToIonPar0RV, float *excitonToIonPar1RV, float *excitonToIonPar2RV, float *pf_eff_par0, float *pf_eff_par1, float *s2_eff_par0, float *s2_eff_par1, float *bkg_probability, int *num_bins_s1, float *bin_edges_s1, int *num_bins_log_s2_s1, float *bin_edges_log_s2_s1, int *hist_2d_array)
+__global__ void gpu_full_observables_production_with_log_hist_single_energy_with_bkg(curandState *state, int *num_trials, float *meanField, float *aEnergy, float *a_energy_bkg, float *photonYield, float *chargeYield, float *g1Value, float *extractionEfficiency, float *gasGainValue, float *gasGainWidth, float *speRes, float *intrinsicResS1, float *intrinsicResS2, float *pf_res, float *excitonToIonPar0RV, float *excitonToIonPar1RV, float *excitonToIonPar2RV, float *pf_eff_par0, float *pf_eff_par1, float *s2_eff_par0, float *s2_eff_par1, float *bkg_probability, int *num_bins_s1, float *bin_edges_s1, int *num_bins_log_s2_s1, float *bin_edges_log_s2_s1, int *hist_2d_array, int *num_loops)
 {
 
 	// start random number generator
@@ -1230,224 +1230,231 @@ __global__ void gpu_full_observables_production_with_log_hist_single_energy_with
 	float s2_eff_prob;
 	
 	float probRecombination;
+    
+    int repetition_number;
 	
 	int s1_bin, log_s2_s1_bin;
 	
 	if (iteration < *num_trials)
 	{
+    
+        for (repetition_number=0; repetition_number < *num_loops; repetition_number++)
+        {
 	
-		// ------------------------------------------------
-		//  Draw random energy from distribution
-		// ------------------------------------------------
-		
+            // ------------------------------------------------
+            //  Draw random energy from distribution
+            // ------------------------------------------------
+            
+            
+            if (curand_uniform(&s) > *bkg_probability)
+                mcEnergy = aEnergy[iteration];
+            else
+                mcEnergy = a_energy_bkg[iteration];
+                    
+
+            // ------------------------------------------------
+            //  Find number of quanta
+            // ------------------------------------------------
+            
+            
+            mcQuanta = curand_poisson(&s, mcEnergy*(*photonYield + *chargeYield));
+            
+            
+            
+            // ------------------------------------------------
+            //  Calculate exciton to ion ratio
+            // ------------------------------------------------
+            
+            if (*excitonToIonPar0RV > 0)
+                excitonToIonPar0 = 1.240 + *excitonToIonPar0RV*0.079;
+            else
+                excitonToIonPar0 = 1.240 - *excitonToIonPar0RV*0.073;
+            
+            if (*excitonToIonPar1RV > 0)
+                excitonToIonPar1 = 0.0472 + *excitonToIonPar1RV*0.0088;
+            else
+                excitonToIonPar1 = 0.0472 - *excitonToIonPar1RV*0.0073;
+            
+            if (*excitonToIonPar2RV > 0)
+                excitonToIonPar2 = 239.0 + *excitonToIonPar2RV*28.0;
+            else
+                excitonToIonPar2 = 239.0 - *excitonToIonPar2RV*8.8;
+            
+            excitonToIonRatio = excitonToIonPar0*powf(*meanField,-excitonToIonPar1) * ( 1 - exp(-excitonToIonPar2 * 11.5*mcEnergy*powf(54, -7./3.)) );
+            
+            probRecombination = ( (excitonToIonRatio+1) * *photonYield )/(*photonYield+*chargeYield) - excitonToIonRatio;
+            
+            
+            
+            // ------------------------------------------------
+            //  Convert to excitons and ions
+            // ------------------------------------------------
+            
+            
+            probExcitonSuccess = 1. - 1./(1. + excitonToIonRatio);
+            if (probExcitonSuccess < 0 || probExcitonSuccess > 1) 
+            {	
+                state[iteration] = s;
+                return;
+            }
+            
+            mcExcitons = gpu_binomial(&s, mcQuanta, probExcitonSuccess);
+            mcIons = mcQuanta - mcExcitons;
+            
+            // ------------------------------------------------
+            //  Ion recombination
+            // ------------------------------------------------
+
+            if (mcIons < 1 || probRecombination < 0 || probRecombination > 1) 
+            {	
+                state[iteration] = s;
+                return;
+            }
+            
+            mcRecombined = gpu_binomial(&s, mcIons, probRecombination);
+            mcPhotons = mcExcitons + mcRecombined;
+            mcElectrons = mcIons - mcRecombined;
+            
+            
+            // ------------------------------------------------
+            //  Convert to S1 and S2 BEFORE smearing
+            // ------------------------------------------------
+            
+            if (mcPhotons < 1 || *g1Value < 0 || *g1Value > 1) 
+            {	
+                state[iteration] = s;
+                return;
+            }
+            if (mcElectrons < 1 || *extractionEfficiency < 0)
+            {	
+                state[iteration] = s;
+                return;
+            }
+            if (*extractionEfficiency > 1)
+            {	
+                *extractionEfficiency = 1;
+            }
+            if (*gasGainWidth <= 0) 
+            {	
+                state[iteration] = s;
+                return;
+            }
+            
+            //return;
+            mcS1 = gpu_binomial(&s, mcPhotons, *g1Value);
+            //return;
+            mcExtractedElectrons = gpu_binomial(&s, mcElectrons, *extractionEfficiency);
+            mcS2 = (curand_normal(&s) * *gasGainWidth*powf(mcExtractedElectrons, 0.5)) + mcExtractedElectrons**gasGainValue;
+            
+            if (mcS1 < 0) 
+            {	
+                state[iteration] = s;
+                return;
+            }
+            if (mcS2 < 0) 
+            {	
+                state[iteration] = s;
+                return;
+            }
+            
+            
+            
+            // ------------------------------------------------
+            //  Smear S1 and S2
+            // ------------------------------------------------
+            
+            if (*speRes <= 0 || *intrinsicResS1 <= 0 || *intrinsicResS2 <= 0) 
+            {	
+                state[iteration] = s;
+                return;
+            }
+            
+            mcS1 = (curand_normal(&s) * *speRes*powf(mcS1, 0.5)) + mcS1;
+            if (mcS1 < 0) 
+            {	
+                state[iteration] = s;
+                return;
+            }
+            
+            mcS1 = (curand_normal(&s) * (pf_res[0] + pf_res[1]*exp(-mcS1/pf_res[2]))) + mcS1;
+            if (mcS1 < 0) 
+            {	
+                state[iteration] = s;
+                return;
+            }
+            
+            mcS1 = (curand_normal(&s) * *intrinsicResS1*mcS1) + mcS1;
+            if (mcS1 < 0) 
+            {	
+                state[iteration] = s;
+                return;
+            }
+            
+            
+            mcS2 = (curand_normal(&s) * *intrinsicResS2*mcS2) + mcS2;
+            if (mcS2 < 0) 
+            {	
+                state[iteration] = s;
+                return;
+            }
+            
+            
+            
+            // trig efficiency
+            s2_eff_prob = 1. - expf(-(mcS2-*s2_eff_par0) / *s2_eff_par1);
+            //s2_eff_prob = 1. / (1. + expf(-(mcS2-*s2_eff_par0) / *s2_eff_par1));
+            if (curand_uniform(&s) > s2_eff_prob)
+            {	
+                state[iteration] = s;
+                return;
+            }
+            
+            // peak finder efficiency
+            pf_eff_prob = 1. / (1. + expf(-(mcS1-*pf_eff_par0) / *pf_eff_par1));
+            if (curand_uniform(&s) > pf_eff_prob)
+            {
+                state[iteration] = s;
+                return;
+            }
+            
+            
+            //hist_2d_array[0] = mcS1;
+            //hist_2d_array[1] = mcS2;
+            //return;
+            
+                
+            // hist_2d_array[0] = *s2_eff_par0;
+            // hist_2d_array[1] = *s2_eff_par1;
+            // hist_2d_array[2] = s2_eff_prob;
+            // hist_2d_array[3] = 100.;
+            // return;
+            
+            // find indices of s1 and s2 bins for 2d histogram
+            
+            s1_bin = gpu_find_lower_bound(num_bins_s1, bin_edges_s1, mcS1);
+            log_s2_s1_bin = gpu_find_lower_bound(num_bins_log_s2_s1, bin_edges_log_s2_s1, log10f(mcS2/mcS1));
+            
+            
+            if (s1_bin == -1 || log_s2_s1_bin == -1)
+            {
+                state[iteration] = s;
+                return;
+            }
+            
+            //hist_2d_array[0] = mcS1;
+            //hist_2d_array[1] = mcS2;
+            //return;
+            
+            // hist_2d_array[0] = s1_bin + *num_bins_s1*log_s2_s1_bin;
+            // hist_2d_array[1] = s1_bin;
+            // hist_2d_array[2] = log_s2_s1_bin;
+            
+            atomicAdd(&hist_2d_array[s1_bin + *num_bins_s1*log_s2_s1_bin], 1);
+            
+            state[iteration] = s;
+            return;
         
-        if (curand_uniform(&s) > *bkg_probability)
-			mcEnergy = aEnergy[iteration];
-        else
-            mcEnergy = a_energy_bkg[iteration];
-				
-
-		// ------------------------------------------------
-		//  Find number of quanta
-		// ------------------------------------------------
-		
-		
-		mcQuanta = curand_poisson(&s, mcEnergy*(*photonYield + *chargeYield));
-		
-		
-		
-		// ------------------------------------------------
-		//  Calculate exciton to ion ratio
-		// ------------------------------------------------
-		
-		if (*excitonToIonPar0RV > 0)
-			excitonToIonPar0 = 1.240 + *excitonToIonPar0RV*0.079;
-		else
-			excitonToIonPar0 = 1.240 - *excitonToIonPar0RV*0.073;
-		
-		if (*excitonToIonPar1RV > 0)
-			excitonToIonPar1 = 0.0472 + *excitonToIonPar1RV*0.0088;
-		else
-			excitonToIonPar1 = 0.0472 - *excitonToIonPar1RV*0.0073;
-		
-		if (*excitonToIonPar2RV > 0)
-			excitonToIonPar2 = 239.0 + *excitonToIonPar2RV*28.0;
-		else
-			excitonToIonPar2 = 239.0 - *excitonToIonPar2RV*8.8;
-		
-		excitonToIonRatio = excitonToIonPar0*powf(*meanField,-excitonToIonPar1) * ( 1 - exp(-excitonToIonPar2 * 11.5*mcEnergy*powf(54, -7./3.)) );
-		
-		probRecombination = ( (excitonToIonRatio+1) * *photonYield )/(*photonYield+*chargeYield) - excitonToIonRatio;
-		
-		
-		
-		// ------------------------------------------------
-		//  Convert to excitons and ions
-		// ------------------------------------------------
-		
-		
-		probExcitonSuccess = 1. - 1./(1. + excitonToIonRatio);
-		if (probExcitonSuccess < 0 || probExcitonSuccess > 1) 
-		{	
-			state[iteration] = s;
-			return;
-		}
-		
-		mcExcitons = gpu_binomial(&s, mcQuanta, probExcitonSuccess);
-		mcIons = mcQuanta - mcExcitons;
-		
-		// ------------------------------------------------
-		//  Ion recombination
-		// ------------------------------------------------
-
-		if (mcIons < 1 || probRecombination < 0 || probRecombination > 1) 
-		{	
-			state[iteration] = s;
-			return;
-		}
-		
-		mcRecombined = gpu_binomial(&s, mcIons, probRecombination);
-		mcPhotons = mcExcitons + mcRecombined;
-		mcElectrons = mcIons - mcRecombined;
-		
-		
-		// ------------------------------------------------
-		//  Convert to S1 and S2 BEFORE smearing
-		// ------------------------------------------------
-		
-		if (mcPhotons < 1 || *g1Value < 0 || *g1Value > 1) 
-		{	
-			state[iteration] = s;
-			return;
-		}
-		if (mcElectrons < 1 || *extractionEfficiency < 0)
-		{	
-			state[iteration] = s;
-			return;
-		}
-		if (*extractionEfficiency > 1)
-		{	
-			*extractionEfficiency = 1;
-		}
-		if (*gasGainWidth <= 0) 
-		{	
-			state[iteration] = s;
-			return;
-		}
-		
-		//return;
-		mcS1 = gpu_binomial(&s, mcPhotons, *g1Value);
-		//return;
-		mcExtractedElectrons = gpu_binomial(&s, mcElectrons, *extractionEfficiency);
-		mcS2 = (curand_normal(&s) * *gasGainWidth*powf(mcExtractedElectrons, 0.5)) + mcExtractedElectrons**gasGainValue;
-		
-		if (mcS1 < 0) 
-		{	
-			state[iteration] = s;
-			return;
-		}
-		if (mcS2 < 0) 
-		{	
-			state[iteration] = s;
-			return;
-		}
-		
-		
-		
-		// ------------------------------------------------
-		//  Smear S1 and S2
-		// ------------------------------------------------
-		
-		if (*speRes <= 0 || *intrinsicResS1 <= 0 || *intrinsicResS2 <= 0) 
-		{	
-			state[iteration] = s;
-			return;
-		}
-		
-		mcS1 = (curand_normal(&s) * *speRes*powf(mcS1, 0.5)) + mcS1;
-		if (mcS1 < 0) 
-		{	
-			state[iteration] = s;
-			return;
-		}
-		
-		mcS1 = (curand_normal(&s) * (pf_res[0] + pf_res[1]*exp(-mcS1/pf_res[2]))) + mcS1;
-		if (mcS1 < 0) 
-		{	
-			state[iteration] = s;
-			return;
-		}
-		
-		mcS1 = (curand_normal(&s) * *intrinsicResS1*mcS1) + mcS1;
-		if (mcS1 < 0) 
-		{	
-			state[iteration] = s;
-			return;
-		}
-		
-		
-		mcS2 = (curand_normal(&s) * *intrinsicResS2*mcS2) + mcS2;
-		if (mcS2 < 0) 
-		{	
-			state[iteration] = s;
-			return;
-		}
-		
-		
-		
-		// trig efficiency
-		s2_eff_prob = 1. - expf(-(mcS2-*s2_eff_par0) / *s2_eff_par1);
-		//s2_eff_prob = 1. / (1. + expf(-(mcS2-*s2_eff_par0) / *s2_eff_par1));
-		if (curand_uniform(&s) > s2_eff_prob)
-		{	
-			state[iteration] = s;
-			return;
-		}
-		
-		// peak finder efficiency
-		pf_eff_prob = 1. / (1. + expf(-(mcS1-*pf_eff_par0) / *pf_eff_par1));
-		if (curand_uniform(&s) > pf_eff_prob)
-		{
-			state[iteration] = s;
-			return;
-		}
-		
-		
-		//hist_2d_array[0] = mcS1;
-		//hist_2d_array[1] = mcS2;
-		//return;
-		
-			
-		// hist_2d_array[0] = *s2_eff_par0;
-		// hist_2d_array[1] = *s2_eff_par1;
-		// hist_2d_array[2] = s2_eff_prob;
-		// hist_2d_array[3] = 100.;
-		// return;
-		
-		// find indices of s1 and s2 bins for 2d histogram
-		
-		s1_bin = gpu_find_lower_bound(num_bins_s1, bin_edges_s1, mcS1);
-		log_s2_s1_bin = gpu_find_lower_bound(num_bins_log_s2_s1, bin_edges_log_s2_s1, log10f(mcS2/mcS1));
-		
-		
-		if (s1_bin == -1 || log_s2_s1_bin == -1)
-		{
-			state[iteration] = s;
-			return;
-		}
-		
-		//hist_2d_array[0] = mcS1;
-		//hist_2d_array[1] = mcS2;
-		//return;
-		
-		// hist_2d_array[0] = s1_bin + *num_bins_s1*log_s2_s1_bin;
-		// hist_2d_array[1] = s1_bin;
-		// hist_2d_array[2] = log_s2_s1_bin;
-		
-		atomicAdd(&hist_2d_array[s1_bin + *num_bins_s1*log_s2_s1_bin], 1);
-		
-		state[iteration] = s;
-		return;
+        }
 	
 	}
 
