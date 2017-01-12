@@ -584,7 +584,7 @@ class neriX_analysis:
     __GERMANIUM_INTERCEPT = '1.717426'
 
     def __init__(self, lFilesToLoad = None, degreeSetting = None, cathodeSetting = None, anodeSetting = None):
-
+    
         if isinstance(lFilesToLoad, str):
             lFilesToLoad = [lFilesToLoad]
 
@@ -991,7 +991,169 @@ class neriX_analysis:
             lChannelsToCutOn = lChannelsAtAngle
 
         # now that channels are final, make cuts on EJs
+        
+        d_psd_cuts = {}
+        d_psd_cuts[16] = {}
+        
+        
+        
+        # 500V/cm
+        d_psd_cuts[16][1.054] = {}
+        
+        d_psd_cuts[16][1.054][2300] = {}
+        d_psd_cuts[16][1.054][2300][0] = {'h_min':0.10, 'h_max':0.70, 'psd_min':.229}
+        d_psd_cuts[16][1.054][2300][1] = {'h_min':0.20, 'h_max':1.00, 'psd_min':.185}
+        d_psd_cuts[16][1.054][2300][2] = {'h_min':0.30, 'h_max':1.45, 'psd_min':.222}
+        d_psd_cuts[16][1.054][2300][3] = {'h_min':0.50, 'h_max':1.35, 'psd_min':.255}
+        d_psd_cuts[16][1.054][3000] = {}
+        d_psd_cuts[16][1.054][3000][0] = d_psd_cuts[16][1.054][2300][0]
+        d_psd_cuts[16][1.054][3000][1] = d_psd_cuts[16][1.054][2300][1]
+        d_psd_cuts[16][1.054][3000][2] = d_psd_cuts[16][1.054][2300][2]
+        d_psd_cuts[16][1.054][3000][3] = d_psd_cuts[16][1.054][2300][3]
+        
+        # 3500, 4500
+        d_psd_cuts[16][1.054][3500] = {}
+        d_psd_cuts[16][1.054][3500][0] = {'h_min':0.10, 'h_max':0.70, 'psd_min':.216}
+        d_psd_cuts[16][1.054][3500][1] = {'h_min':0.20, 'h_max':1.00, 'psd_min':.123}
+        d_psd_cuts[16][1.054][3500][2] = {'h_min':0.30, 'h_max':1.45, 'psd_min':.159}
+        d_psd_cuts[16][1.054][3500][3] = {'h_min':0.50, 'h_max':1.35, 'psd_min':.196}
+        d_psd_cuts[16][1.054][4500] = {}
+        d_psd_cuts[16][1.054][4500][0] = d_psd_cuts[16][1.054][3500][0]
+        d_psd_cuts[16][1.054][4500][1] = d_psd_cuts[16][1.054][3500][1]
+        d_psd_cuts[16][1.054][4500][2] = d_psd_cuts[16][1.054][3500][2]
+        d_psd_cuts[16][1.054][4500][3] = d_psd_cuts[16][1.054][3500][3]
+        
+        # 5300, 6200
+        d_psd_cuts[16][1.054][5300] = {}
+        d_psd_cuts[16][1.054][5300][0] = {'h_min':0.10, 'h_max':0.70, 'psd_min':.181}
+        d_psd_cuts[16][1.054][5300][1] = {'h_min':0.20, 'h_max':1.00, 'psd_min':.127}
+        d_psd_cuts[16][1.054][5300][2] = {'h_min':0.30, 'h_max':1.45, 'psd_min':.188}
+        d_psd_cuts[16][1.054][5300][3] = {'h_min':0.50, 'h_max':1.35, 'psd_min':.217}
+        d_psd_cuts[16][1.054][6200] = {}
+        d_psd_cuts[16][1.054][6200][0] = d_psd_cuts[16][1.054][5300][0]
+        d_psd_cuts[16][1.054][6200][1] = d_psd_cuts[16][1.054][5300][1]
+        d_psd_cuts[16][1.054][6200][2] = d_psd_cuts[16][1.054][5300][2]
+        d_psd_cuts[16][1.054][6200][3] = d_psd_cuts[16][1.054][5300][3]
+        
+        
+        
+        
+        # 200V/cm
+        d_psd_cuts[16][0.345] = {}
+        
+        d_psd_cuts[16][0.345][2300] = {}
+        d_psd_cuts[16][0.345][2300][0] = {'h_min':0.10, 'h_max':0.70, 'psd_min':.238}
+        d_psd_cuts[16][0.345][2300][1] = {'h_min':0.20, 'h_max':1.00, 'psd_min':.190}
+        d_psd_cuts[16][0.345][2300][2] = {'h_min':0.30, 'h_max':1.45, 'psd_min':.223}
+        d_psd_cuts[16][0.345][2300][3] = {'h_min':0.50, 'h_max':1.35, 'psd_min':.229}
+        d_psd_cuts[16][0.345][3000] = {}
+        d_psd_cuts[16][0.345][3000][0] = d_psd_cuts[16][0.345][2300][0]
+        d_psd_cuts[16][0.345][3000][1] = d_psd_cuts[16][0.345][2300][1]
+        d_psd_cuts[16][0.345][3000][2] = d_psd_cuts[16][0.345][2300][2]
+        d_psd_cuts[16][0.345][3000][3] = d_psd_cuts[16][0.345][2300][3]
+        
+        # 3500, 4500
+        d_psd_cuts[16][0.345][3500] = {}
+        d_psd_cuts[16][0.345][3500][0] = {'h_min':0.10, 'h_max':0.70, 'psd_min':.205}
+        d_psd_cuts[16][0.345][3500][1] = {'h_min':0.20, 'h_max':1.00, 'psd_min':.165}
+        d_psd_cuts[16][0.345][3500][2] = {'h_min':0.30, 'h_max':1.45, 'psd_min':.177}
+        d_psd_cuts[16][0.345][3500][3] = {'h_min':0.50, 'h_max':1.35, 'psd_min':.197}
+        d_psd_cuts[16][0.345][4500] = {}
+        d_psd_cuts[16][0.345][4500][0] = d_psd_cuts[16][0.345][3500][0]
+        d_psd_cuts[16][0.345][4500][1] = d_psd_cuts[16][0.345][3500][1]
+        d_psd_cuts[16][0.345][4500][2] = d_psd_cuts[16][0.345][3500][2]
+        d_psd_cuts[16][0.345][4500][3] = d_psd_cuts[16][0.345][3500][3]
+        
+        # 5300, 6200
+        d_psd_cuts[16][0.345][5300] = {}
+        d_psd_cuts[16][0.345][5300][0] = {'h_min':0.10, 'h_max':0.70, 'psd_min':.151}
+        d_psd_cuts[16][0.345][5300][1] = {'h_min':0.20, 'h_max':1.00, 'psd_min':.173}
+        d_psd_cuts[16][0.345][5300][2] = {'h_min':0.30, 'h_max':1.45, 'psd_min':.202}
+        d_psd_cuts[16][0.345][5300][3] = {'h_min':0.50, 'h_max':1.35, 'psd_min':.201}
+        d_psd_cuts[16][0.345][6200] = {}
+        d_psd_cuts[16][0.345][6200][0] = d_psd_cuts[16][0.345][5300][0]
+        d_psd_cuts[16][0.345][6200][1] = d_psd_cuts[16][0.345][5300][1]
+        d_psd_cuts[16][0.345][6200][2] = d_psd_cuts[16][0.345][5300][2]
+        d_psd_cuts[16][0.345][6200][3] = d_psd_cuts[16][0.345][5300][3]
+        
+        
+        
+        
+        
+        # 1000V/cm
+        d_psd_cuts[16][2.356] = {}
+        
+        d_psd_cuts[16][2.356][2300] = {}
+        d_psd_cuts[16][2.356][2300][0] = {'h_min':0.10, 'h_max':0.70, 'psd_min':.232}
+        d_psd_cuts[16][2.356][2300][1] = {'h_min':0.20, 'h_max':1.00, 'psd_min':.188}
+        d_psd_cuts[16][2.356][2300][2] = {'h_min':0.30, 'h_max':1.45, 'psd_min':.210}
+        d_psd_cuts[16][2.356][2300][3] = {'h_min':0.50, 'h_max':1.35, 'psd_min':.230}
+        d_psd_cuts[16][2.356][3000] = {}
+        d_psd_cuts[16][2.356][3000][0] = d_psd_cuts[16][2.356][2300][0]
+        d_psd_cuts[16][2.356][3000][1] = d_psd_cuts[16][2.356][2300][1]
+        d_psd_cuts[16][2.356][3000][2] = d_psd_cuts[16][2.356][2300][2]
+        d_psd_cuts[16][2.356][3000][3] = d_psd_cuts[16][2.356][2300][3]
+        
+        # 3500, 4500
+        d_psd_cuts[16][2.356][3500] = {}
+        d_psd_cuts[16][2.356][3500][0] = {'h_min':0.10, 'h_max':0.70, 'psd_min':.236}
+        d_psd_cuts[16][2.356][3500][1] = {'h_min':0.20, 'h_max':1.00, 'psd_min':.185}
+        d_psd_cuts[16][2.356][3500][2] = {'h_min':0.30, 'h_max':1.45, 'psd_min':.189}
+        d_psd_cuts[16][2.356][3500][3] = {'h_min':0.50, 'h_max':1.35, 'psd_min':.210}
+        d_psd_cuts[16][2.356][4500] = {}
+        d_psd_cuts[16][2.356][4500][0] = d_psd_cuts[16][2.356][3500][0]
+        d_psd_cuts[16][2.356][4500][1] = d_psd_cuts[16][2.356][3500][1]
+        d_psd_cuts[16][2.356][4500][2] = d_psd_cuts[16][2.356][3500][2]
+        d_psd_cuts[16][2.356][4500][3] = d_psd_cuts[16][2.356][3500][3]
+        
+        # 5300, 6200
+        d_psd_cuts[16][2.356][5300] = {}
+        d_psd_cuts[16][2.356][5300][0] = {'h_min':0.10, 'h_max':0.70, 'psd_min':.151}
+        d_psd_cuts[16][2.356][5300][1] = {'h_min':0.20, 'h_max':1.00, 'psd_min':.169}
+        d_psd_cuts[16][2.356][5300][2] = {'h_min':0.30, 'h_max':1.45, 'psd_min':.177}
+        d_psd_cuts[16][2.356][5300][3] = {'h_min':0.50, 'h_max':1.35, 'psd_min':.218}
+        d_psd_cuts[16][2.356][6200] = {}
+        d_psd_cuts[16][2.356][6200][0] = d_psd_cuts[16][2.356][5300][0]
+        d_psd_cuts[16][2.356][6200][1] = d_psd_cuts[16][2.356][5300][1]
+        d_psd_cuts[16][2.356][6200][2] = d_psd_cuts[16][2.356][5300][2]
+        d_psd_cuts[16][2.356][6200][3] = d_psd_cuts[16][2.356][5300][3]
+        
+        
+        
+        
+        
+        
         for channel in lChannelsToCutOn:
+            try:
+                h_min = d_psd_cuts[self.runNumber][self.cathodeSetting][angle][channel]['h_min']
+                h_max = d_psd_cuts[self.runNumber][self.cathodeSetting][angle][channel]['h_max']
+                psd_min = d_psd_cuts[self.runNumber][self.cathodeSetting][angle][channel]['psd_min']
+                Xneutron += ' || ((psd%d > %f) && (LiqSciHeight[%d] > %f && LiqSciHeight[%d] < %f))' % (channel, psd_min, channel, h_min, channel, h_max)
+            except:
+                warning_message('Using old EJ cuts - please perform EJ discrimination analysis for these settings first!')
+                if channel == 0:
+                    default_h_min = 0.2
+                    default_h_max = 1.0
+                    default_psd_min = 0.22
+                elif channel == 1:
+                    default_h_min = 0.35
+                    default_h_max = 1.0
+                    default_psd_min = 0.15
+                elif channel == 2:
+                    default_h_min = 0.35
+                    default_h_max = 1.0
+                    default_psd_min = 0.15
+                elif channel == 3:
+                    default_h_min = 0.35
+                    default_h_max = 1.0
+                    default_psd_min = 0.15
+                else:
+                    failure_message('neriX_analysis not able to handle EJ channel %d.  Please check input and try again.' % (channel))
+                    sys.exit()
+            
+                Xneutron += ' || ((psd%d > %f) && (LiqSciHeight[%d] > %f && LiqSciHeight[%d] < %f))' % (channel, default_psd_min, channel, default_h_min, channel, default_h_max)
+            
+            """
             if channel == 0:
                 Xneutron += ' || ((psd0 > 0.22) && (LiqSciHeight[0] > 0.2 && LiqSciHeight[0] < 1.0))'
             elif channel == 1:
@@ -1004,6 +1166,7 @@ class neriX_analysis:
             else:
                 print 'neriX_analysis not able to handle EJ channel ' + str(channel) + '.  Please check input and try again.'
                 sys.exit()
+            """
 
         Xneutron += ' )' # end if clause
         self.Xrun = self.Xrun + ' && ' + Xneutron
