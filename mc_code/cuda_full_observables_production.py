@@ -1190,7 +1190,7 @@ __global__ void gpu_full_observables_production_with_log_hist_single_energy(cura
 
 
 
-__global__ void gpu_full_observables_production_with_log_hist_single_energy_with_bkg(curandState *state, int *num_trials, float *meanField, float *aEnergy, float *a_energy_bkg, float *photonYield, float *chargeYield, float *g1Value, float *extractionEfficiency, float *gasGainValue, float *gasGainWidth, float *speRes, float *intrinsicResS1, float *intrinsicResS2, float *pf_res, float *excitonToIonPar0RV, float *excitonToIonPar1RV, float *excitonToIonPar2RV, float *pf_eff_par0, float *pf_eff_par1, float *s2_eff_par0, float *s2_eff_par1, float *bkg_probability, int *num_bins_s1, float *bin_edges_s1, int *num_bins_log_s2_s1, float *bin_edges_log_s2_s1, int *hist_2d_array, int *num_loops)
+__global__ void gpu_full_observables_production_with_log_hist_single_energy_with_bkg(curandState *state, int *num_trials, float *meanField, float *aEnergy, float *a_energy_bkg, float *photonYield, float *chargeYield, float *g1Value, float *extractionEfficiency, float *gasGainValue, float *gasGainWidth, float *speRes, float *intrinsicResS1, float *intrinsicResS2, float *pf_res, float *excitonToIonPar0RV, float *excitonToIonPar1RV, float *excitonToIonPar2RV, float *pf_eff_par0, float *pf_eff_par1, float *s2_eff_par0, float *s2_eff_par1, float *bkg_probability, int *num_bins_s1, float *bin_edges_s1, int *num_bins_log_s2_s1, float *bin_edges_log_s2_s1, float *hist_2d_array, int *num_loops)
 {
 
 	// start random number generator
@@ -1403,19 +1403,23 @@ __global__ void gpu_full_observables_production_with_log_hist_single_energy_with
             // trig efficiency
             s2_eff_prob = 1. - expf(-(mcS2-*s2_eff_par0) / *s2_eff_par1);
             //s2_eff_prob = 1. / (1. + expf(-(mcS2-*s2_eff_par0) / *s2_eff_par1));
+            /*
             if (curand_uniform(&s) > s2_eff_prob)
             {	
                 state[iteration] = s;
                 return;
             }
+            */
             
             // peak finder efficiency
             pf_eff_prob = 1. / (1. + expf(-(mcS1-*pf_eff_par0) / *pf_eff_par1));
+            /*
             if (curand_uniform(&s) > pf_eff_prob)
             {
                 state[iteration] = s;
                 return;
             }
+            */
             
             
             //hist_2d_array[0] = mcS1;
@@ -1449,7 +1453,11 @@ __global__ void gpu_full_observables_production_with_log_hist_single_energy_with
             // hist_2d_array[1] = s1_bin;
             // hist_2d_array[2] = log_s2_s1_bin;
             
-            atomicAdd(&hist_2d_array[s1_bin + *num_bins_s1*log_s2_s1_bin], 1);
+            //atomicAdd(&hist_2d_array[s1_bin + *num_bins_s1*log_s2_s1_bin], 1);
+            
+            // add weight of point (efficiency)
+            // must be using float array
+            atomicAdd(&hist_2d_array[s1_bin + *num_bins_s1*log_s2_s1_bin], s2_eff_prob*pf_eff_prob);
             
             state[iteration] = s;
             return;
