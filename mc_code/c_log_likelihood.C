@@ -78,7 +78,7 @@ float log_likelihood_normalized_pdf(float *a_flat_data, float *a_flat_mc_normali
 	{
 		
 		//if (a_flat_mc[bin_number]*num_mc_events/scale_normalized_to_mc_events < 800) continue;
-		if (a_flat_data[bin_number] < 5) continue;
+		if (a_flat_data[bin_number] < 3) continue;
 		
 		if (a_flat_data[bin_number] != 0 && a_flat_mc_normalized[bin_number] == 0)
 		{
